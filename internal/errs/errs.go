@@ -18,3 +18,7 @@ func ErrCFGLoad() error {
 func ErrDBConnection() error {
 	return Error{Code: 0, Msg: "can't connect to database"}
 }
+
+func ErrLoggerLevel() error {
+	return Error{Code: 0, Msg: "can't set up logger's level"}
+}

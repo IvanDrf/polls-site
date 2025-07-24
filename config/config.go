@@ -18,6 +18,8 @@ type Config struct {
 
 	DBUser     string
 	DBPassword string
+
+	Logger string
 }
 
 func InitCFG() *Config {
@@ -35,5 +37,7 @@ func InitCFG() *Config {
 
 		DBUser:     os.Getenv("DB_USER"),
 		DBPassword: os.Getenv("DB_PASSWORD"),
+
+		Logger: os.Getenv("LOGGER_LEVEL"),
 	}
 }
