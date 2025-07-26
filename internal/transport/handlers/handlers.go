@@ -15,8 +15,6 @@ import (
 type Handler interface {
 	RegisterUser(w http.ResponseWriter, r *http.Request)
 	LoginUser(w http.ResponseWriter, r *http.Request)
-
-	Private(w http.ResponseWriter, r *http.Request)
 }
 
 type handler struct {
@@ -90,8 +88,4 @@ func (this handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(token)
-}
-
-func (this handler) Private(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("hello\n"))
 }
