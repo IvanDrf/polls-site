@@ -1,15 +1,19 @@
-package auth
+package checker
 
-import "unicode"
+import (
+	"unicode"
 
-type PSWChecker interface {
+	"golang.org/x/crypto/bcrypt"
+)
+
+type PswChecker interface {
 	ValidPassword(passw string) bool
 }
 
 type checker struct {
 }
 
-func NewPSWChecker() PSWChecker {
+func NewPSWChecker() PswChecker {
 	return checker{}
 }
 
@@ -50,4 +54,22 @@ func (this checker) ValidPassword(passw string) bool {
 	}
 
 	return hasUpper && hasLower && hasNumber && !hasInvalid
+}
+
+type PswHasher interface {
+	HashPassword(passw string) string
+}
+
+type hasher struct {
+}
+
+func NewPswHasher() PswHasher {
+	return hasher{}
+}
+
+const hashLen = 14
+
+func (this hasher) HashPassword(passw string) string {
+	bytes, _ := bcrypt.GenerateFromPassword([]byte(passw), hashLen)
+	return string(bytes)
 }

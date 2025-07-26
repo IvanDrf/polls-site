@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/IvanDrf/polls-site/config"
 	"github.com/IvanDrf/polls-site/internal/database"
+	"github.com/IvanDrf/polls-site/internal/transport/server"
 	"github.com/IvanDrf/polls-site/logger"
 )
 
@@ -13,5 +14,8 @@ func main() {
 	defer db.Close()
 
 	logger := logger.InitLogger(cfg)
-	logger.Info("success")
+
+	server := server.NewServer(cfg, db, logger)
+	server.RegisterRoutes()
+	server.Start(cfg)
 }
