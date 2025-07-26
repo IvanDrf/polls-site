@@ -18,14 +18,14 @@ func NewPSWChecker() PswChecker {
 }
 
 var invalidSymbols = map[rune]struct{}{
-	'?': struct{}{},
-	'#': struct{}{},
-	'<': struct{}{},
-	'>': struct{}{},
-	'%': struct{}{},
-	'@': struct{}{},
-	'/': struct{}{},
-	';': struct{}{},
+	'?': {},
+	'#': {},
+	'<': {},
+	'>': {},
+	'%': {},
+	'@': {},
+	'/': {},
+	';': {},
 }
 
 func (this checker) ValidPassword(passw string) bool {
