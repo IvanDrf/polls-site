@@ -11,7 +11,7 @@ import (
 const userTable = "users"
 
 type Repo interface {
-	RegisterUser(user *models.RegisterReq) error
+	RegisterUser(user *models.UserReq) error
 	FindUserByEmail(em string) (models.User, error)
 }
 
@@ -27,7 +27,7 @@ func NewRepo(cfg *config.Config, db *sql.DB) Repo {
 	}
 }
 
-func (this repo) RegisterUser(user *models.RegisterReq) error {
+func (this repo) RegisterUser(user *models.UserReq) error {
 	query := fmt.Sprintf("INSERT INTO %s.%s (email, passw) VALUES (?, ?)", this.dbName, userTable)
 	_, err := this.db.Exec(query, user.Email, user.Password)
 

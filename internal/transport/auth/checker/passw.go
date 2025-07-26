@@ -18,14 +18,14 @@ func NewPSWChecker() PswChecker {
 }
 
 var invalidSymbols = map[rune]struct{}{
-	'?': struct{}{},
-	'#': struct{}{},
-	'<': struct{}{},
-	'>': struct{}{},
-	'%': struct{}{},
-	'@': struct{}{},
-	'/': struct{}{},
-	';': struct{}{},
+	'?': {},
+	'#': {},
+	'<': {},
+	'>': {},
+	'%': {},
+	'@': {},
+	'/': {},
+	';': {},
 }
 
 func (this checker) ValidPassword(passw string) bool {
@@ -58,6 +58,7 @@ func (this checker) ValidPassword(passw string) bool {
 
 type PswHasher interface {
 	HashPassword(passw string) string
+	ComparePassword(hashed, passw string) bool
 }
 
 type hasher struct {
@@ -72,4 +73,8 @@ const hashLen = 14
 func (this hasher) HashPassword(passw string) string {
 	bytes, _ := bcrypt.GenerateFromPassword([]byte(passw), hashLen)
 	return string(bytes)
+}
+
+func (this hasher) ComparePassword(hashed, passw string) bool {
+	return bcrypt.CompareHashAndPassword([]byte(hashed), []byte(passw)) == nil
 }

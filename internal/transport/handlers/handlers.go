@@ -14,6 +14,7 @@ import (
 
 type Handler interface {
 	RegisterUser(w http.ResponseWriter, r *http.Request)
+	LoginUser(w http.ResponseWriter, r *http.Request)
 }
 
 type handler struct {
@@ -38,7 +39,7 @@ func (this handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := models.RegisterReq{}
+	req := models.UserReq{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 
@@ -55,4 +56,36 @@ func (this handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"success": "true"})
+}
+
+func (this handler) LoginUser(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	if w.Header().Get("Content-Type") != "application/json" {
+		w.WriteHeader(http.StatusBadRequest)
+
+		json.NewEncoder(w).Encode(errs.ErrInvalidBodyType())
+		return
+	}
+
+	user := models.UserReq{}
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+
+		json.NewEncoder(w).Encode(errs.ErrInvalidBodyReq())
+		return
+	}
+
+	token := models.JWT{}
+	var err error
+	token.Token, err = this.authService.LoginUser(&user)
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+
+		json.NewEncoder(w).Encode(err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(token)
 }

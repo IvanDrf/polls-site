@@ -1,13 +1,17 @@
 package models
 
-// Register User
-type RegisterReq struct {
+// Register/Login User
+type UserReq struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
 type User struct {
-	Id       int
+	Id       int    `json:"id"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
+}
+
+type JWT struct {
+	Token string `json:"token"`
 }

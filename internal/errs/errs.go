@@ -63,3 +63,28 @@ func ErrInvalidBodyType() error {
 func ErrInvalidBodyReq() error {
 	return Error{Code: http.StatusBadRequest, Msg: "invalid json"}
 }
+
+// Error of loggin, cant find user in database
+func ErrCantFindUser() error {
+	return Error{Code: http.StatusUnauthorized, Msg: "user with this email doesn't exist"}
+}
+
+// Error of password, incorrect password during logging
+func ErrInvalidPswInLog() error {
+	return Error{Code: http.StatusUnauthorized, Msg: "incorrect password"}
+}
+
+// Error of jwt token, cant create new jwt token
+func ErrCantCreateToken() error {
+	return Error{Code: http.StatusInternalServerError, Msg: "can't create jwt token"}
+}
+
+// Error of jwt token, incorrect signing method
+func ErrIncorrectJWTMethod() error {
+	return Error{Code: http.StatusBadRequest, Msg: "invalid jwt signing method"}
+}
+
+// Error of jwt token, invalid token or expired token
+func ErrInValidToken() error {
+	return Error{Code: http.StatusBadRequest, Msg: "invalid jwt token"}
+}

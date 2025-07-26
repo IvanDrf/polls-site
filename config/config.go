@@ -20,6 +20,7 @@ type Config struct {
 	DBPassword string
 
 	Logger string
+	JWT    []byte
 }
 
 func InitCFG() *Config {
@@ -39,5 +40,6 @@ func InitCFG() *Config {
 		DBPassword: os.Getenv("DB_PASSWORD"),
 
 		Logger: os.Getenv("LOGGER_LEVEL"),
+		JWT:    []byte(os.Getenv("JWT_SECRET")),
 	}
 }
