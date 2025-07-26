@@ -2,14 +2,13 @@ package auth
 
 import (
 	"database/sql"
-	"time"
 
 	"github.com/IvanDrf/polls-site/config"
 	"github.com/IvanDrf/polls-site/internal/errs"
 	"github.com/IvanDrf/polls-site/internal/models"
 	"github.com/IvanDrf/polls-site/internal/repo"
 	"github.com/IvanDrf/polls-site/internal/transport/auth/checker"
-	"github.com/golang-jwt/jwt"
+	"github.com/IvanDrf/polls-site/internal/transport/auth/jwt"
 )
 
 type Auther interface {
@@ -22,7 +21,7 @@ type auth struct {
 	pswHasher  checker.PswHasher
 	emChecker  checker.EmailChecker
 
-	jwtSecret []byte
+	jwter jwt.Jwter
 
 	repo repo.Repo
 }
@@ -33,8 +32,9 @@ func NewAuthService(cfg *config.Config, db *sql.DB) Auther {
 		pswHasher:  checker.NewPswHasher(),
 		emChecker:  checker.NewEmailChecker(),
 
-		repo:      repo.NewRepo(cfg, db),
-		jwtSecret: cfg.JWT,
+		jwter: jwt.NewJwter(cfg),
+
+		repo: repo.NewRepo(cfg, db),
 	}
 }
 
@@ -70,20 +70,10 @@ func (this auth) LoginUser(req *models.UserReq) (string, error) {
 		return "", errs.ErrInvalidPswInLog()
 	}
 
-	token, err := this.generateJWT(&user)
+	token, err := this.jwter.GenerateJWT(&user)
 	if err != nil {
 		return "", errs.ErrCantCreateToken()
 	}
 
 	return token, nil
-}
-
-func (this auth) generateJWT(user *models.User) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"user_id": user.Id,
-		"email":   user.Email,
-		"exp":     time.Now().Add(24 * time.Hour).Unix(),
-	})
-
-	return token.SignedString(this.jwtSecret)
 }
