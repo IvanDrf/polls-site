@@ -33,4 +33,5 @@ func (this *Server) Start(cfg *config.Config) {
 
 func (this *Server) RegisterRoutes() {
 	this.server.HandleFunc("POST /register", this.handler.RegisterUser)
+	this.server.HandleFunc("POST /login", this.handler.LoginUser)
 }

@@ -9,7 +9,7 @@ import (
 )
 
 type Service interface {
-	RegisterUser(req *models.RegisterReq) error
+	RegisterUser(req *models.UserReq) error
 }
 
 type service struct {
@@ -20,6 +20,6 @@ func NewService(cfg *config.Config, db *sql.DB) Service {
 	return service{repo: repo.NewRepo(cfg, db)}
 }
 
-func (this service) RegisterUser(req *models.RegisterReq) error {
+func (this service) RegisterUser(req *models.UserReq) error {
 	return nil
 }
