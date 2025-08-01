@@ -1,6 +1,7 @@
 package jwt
 
 import (
+	"sync"
 	"time"
 
 	"github.com/IvanDrf/polls-site/config"
@@ -10,7 +11,11 @@ import (
 )
 
 type Jwter interface {
-	GenerateJWT(user *models.User) (string, error)
+	GenerateTokens(user *models.User) (string, string, error)
+
+	GenerateAccessJWT(user *models.User) (string, error)
+	GenerateRefreshJWT(user *models.User) (string, error)
+
 	IsValidJWT(tokenStr string) error
 }
 
@@ -22,23 +27,65 @@ func NewJwter(cfg *config.Config) Jwter {
 	return jwter{jwtSecret: cfg.JWT}
 }
 
-func (this jwter) GenerateJWT(user *models.User) (string, error) {
+const (
+	accessTime  = 24 * time.Hour
+	refreshTime = 7 * 24 * time.Hour
+)
+
+func (j jwter) GenerateTokens(user *models.User) (string, string, error) {
+	wg := new(sync.WaitGroup)
+	wg.Add(1)
+
+	accessToken, refreshToken := "", ""
+	var errAccess, errRefresh error
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		accessToken, errAccess = j.GenerateAccessJWT(user)
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		refreshToken, errRefresh = j.GenerateRefreshJWT(user)
+	}()
+
+	wg.Wait()
+	if errAccess != nil || errRefresh != nil {
+		return "", "", errs.ErrCantCreateToken()
+	}
+
+	return accessToken, refreshToken, nil
+}
+
+func (j jwter) GenerateAccessJWT(user *models.User) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": user.Id,
 		"email":   user.Email,
-		"exp":     time.Now().Add(24 * time.Hour).Unix(),
+		"exp":     time.Now().Add(accessTime).Unix(),
 	})
 
-	return token.SignedString(this.jwtSecret)
+	return token.SignedString(j.jwtSecret)
 }
 
-func (this jwter) IsValidJWT(tokenStr string) error {
+func (j jwter) GenerateRefreshJWT(user *models.User) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"user_id": user.Id,
+		"email":   user.Email,
+		"exp":     time.Now().Add(refreshTime).Unix(),
+	})
+
+	return token.SignedString(j.jwtSecret)
+}
+
+func (j jwter) IsValidJWT(tokenStr string) error {
 	token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errs.ErrIncorrectJWTMethod()
 		}
 
-		return this.jwtSecret, nil
+		return j.jwtSecret, nil
 	})
 
 	if err != nil || !token.Valid {

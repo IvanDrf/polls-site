@@ -29,7 +29,7 @@ func NewHandler(cfg *config.Config, db *sql.DB, logger *slog.Logger) Handler {
 	}
 }
 
-func (this handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
+func (hand handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if w.Header().Get("Content-Type") != "application/json" {
@@ -47,7 +47,7 @@ func (this handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := this.authService.RegisterUser(&req); err != nil {
+	if err := hand.authService.RegisterUser(&req); err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 
 		json.NewEncoder(w).Encode(err)
@@ -58,7 +58,7 @@ func (this handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"success": "true"})
 }
 
-func (this handler) LoginUser(w http.ResponseWriter, r *http.Request) {
+func (hand handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if w.Header().Get("Content-Type") != "application/json" {
@@ -78,7 +78,7 @@ func (this handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 
 	token := models.JWT{}
 	var err error
-	token.Token, err = this.authService.LoginUser(&user)
+	token.Access, token.Refresh, err = hand.authService.LoginUser(&user)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 

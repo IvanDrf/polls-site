@@ -20,7 +20,7 @@ func NewMiddleware(cfg *config.Config) Middleware {
 	return middleware{jwter: jwt.NewJwter(cfg)}
 }
 
-func (this middleware) AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
+func (middle middleware) AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
@@ -34,7 +34,7 @@ func (this middleware) AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		if err := this.jwter.IsValidJWT(tokenParts[1]); err != nil {
+		if err := middle.jwter.IsValidJWT(tokenParts[1]); err != nil {
 			http.Error(w, "invalid or expired token", http.StatusUnauthorized)
 			return
 		}
