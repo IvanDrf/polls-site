@@ -14,7 +14,7 @@ func InitDB(cfg *config.Config) *sql.DB {
 		User:   cfg.DBUser,
 		Passwd: cfg.DBPassword,
 		Net:    "tcp",
-		Addr:   cfg.DBHost + cfg.DBPort,
+		Addr:   cfg.DBHost + ":" + cfg.DBPort,
 		DBName: cfg.DBName,
 	}
 

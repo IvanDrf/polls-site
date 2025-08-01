@@ -27,16 +27,16 @@ func NewRepo(cfg *config.Config, db *sql.DB) Repo {
 	}
 }
 
-func (this repo) RegisterUser(user *models.UserReq) error {
-	query := fmt.Sprintf("INSERT INTO %s.%s (email, passw) VALUES (?, ?)", this.dbName, userTable)
-	_, err := this.db.Exec(query, user.Email, user.Password)
+func (r repo) RegisterUser(user *models.UserReq) error {
+	query := fmt.Sprintf("INSERT INTO %s.%s (email, passw) VALUES (?, ?)", r.dbName, userTable)
+	_, err := r.db.Exec(query, user.Email, user.Password)
 
 	return err
 }
 
-func (this repo) FindUserByEmail(em string) (models.User, error) {
-	query := fmt.Sprintf("SELECT id, email, passw FROM %s.%s WHERE email= ?", this.dbName, userTable)
-	res := this.db.QueryRow(query, em)
+func (r repo) FindUserByEmail(em string) (models.User, error) {
+	query := fmt.Sprintf("SELECT id, email, passw FROM %s.%s WHERE email= ?", r.dbName, userTable)
+	res := r.db.QueryRow(query, em)
 
 	user := models.User{}
 	if err := res.Scan(&user.Id, &user.Email, &user.Password); err != nil {
