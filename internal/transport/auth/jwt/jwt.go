@@ -1,6 +1,8 @@
 package jwter
 
 import (
+	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -10,10 +12,21 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
-type Jwter interface {
-	ParseToken(tokenSrt string) (*jwt.Token, error)
-	GenerateTokens(user *models.User) (string, string, error)
+const (
+	AccessToken  = "access_jwt"
+	RefreshToken = "refresh_jwt"
 
+	UserId = "user_id"
+
+	accessTime  = 24 * time.Hour
+	refreshTime = 7 * 24 * time.Hour
+)
+
+type Jwter interface {
+	GetToken(r *http.Request) (string, error)
+	ParseToken(tokenSrt string) (*jwt.Token, error)
+
+	GenerateTokens(user *models.User) (string, string, error)
 	GenerateAccessJWT(user *models.User) (string, error)
 	GenerateRefreshJWT(user *models.User) (string, error)
 
@@ -28,15 +41,23 @@ func NewJwter(cfg *config.Config) Jwter {
 	return jwter{jwtSecret: cfg.JWT}
 }
 
-const (
-	AccessToken  = "access_jwt"
-	RefreshToken = "refresh_jwt"
+// Get token from header/cookies
+func (j jwter) GetToken(r *http.Request) (string, error) {
+	authHeader := r.Header.Get("Authorization")
+	if authHeader != "" {
+		tokenParts := strings.Split(authHeader, " ")
+		if len(tokenParts) == 2 && tokenParts[0] == "Bearer" {
+			return tokenParts[1], nil
+		}
+	}
 
-	UserId = "user_id"
+	cookie, err := r.Cookie(AccessToken)
+	if err != nil {
+		return "", errs.ErrCantFindToken()
+	}
 
-	accessTime  = 24 * time.Hour
-	refreshTime = 7 * 24 * time.Hour
-)
+	return cookie.Value, nil
+}
 
 func (j jwter) ParseToken(tokenSrt string) (*jwt.Token, error) {
 	token, err := jwt.Parse(tokenSrt, func(t *jwt.Token) (interface{}, error) {

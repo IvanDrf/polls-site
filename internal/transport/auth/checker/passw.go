@@ -28,7 +28,7 @@ var invalidSymbols = map[rune]struct{}{
 	';': {},
 }
 
-func (this checker) ValidPassword(passw string) bool {
+func (c checker) ValidPassword(passw string) bool {
 	if len(passw) < 5 {
 		return false
 	}
@@ -70,11 +70,11 @@ func NewPswHasher() PswHasher {
 
 const hashLen = 14
 
-func (this hasher) HashPassword(passw string) string {
+func (h hasher) HashPassword(passw string) string {
 	bytes, _ := bcrypt.GenerateFromPassword([]byte(passw), hashLen)
 	return string(bytes)
 }
 
-func (this hasher) ComparePassword(hashed, passw string) bool {
+func (h hasher) ComparePassword(hashed, passw string) bool {
 	return bcrypt.CompareHashAndPassword([]byte(hashed), []byte(passw)) == nil
 }

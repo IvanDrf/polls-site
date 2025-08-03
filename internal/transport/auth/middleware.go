@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"net/http"
-	"strings"
 
 	"github.com/IvanDrf/polls-site/config"
 	"github.com/IvanDrf/polls-site/internal/errs"
@@ -40,7 +39,7 @@ func NewMiddleware(cfg *config.Config, db *sql.DB) Middleware {
 
 func (middle middleware) AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		accessToken, err := GetToken(r)
+		accessToken, err := middle.jwter.GetToken(r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
@@ -81,6 +80,7 @@ func (middle middleware) AuthMiddleware(next http.HandlerFunc) http.HandlerFunc 
 	}
 }
 
+// Refresh tokens for user
 func (middle middleware) RefreshTokens(refreshToken string) (string, string, error) {
 	token, err := middle.jwter.ParseToken(refreshToken)
 	if err != nil {
@@ -113,20 +113,4 @@ func (middle middleware) RefreshTokens(refreshToken string) (string, string, err
 	}
 
 	return accessToken, refreshToken, nil
-}
-
-func GetToken(r *http.Request) (string, error) {
-	authHeader := r.Header.Get("Authorization")
-	if authHeader != "" {
-		tokenParts := strings.Split(authHeader, " ")
-		if len(tokenParts) == 2 && tokenParts[0] == "Bearer" {
-			return tokenParts[1], nil
-		}
-	}
-
-	if cookie, err := r.Cookie(jwter.AccessToken); err == nil {
-		return cookie.Value, nil
-	}
-
-	return "", errs.ErrCantFindToken()
 }
