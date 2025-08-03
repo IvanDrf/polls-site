@@ -10,6 +10,7 @@ import (
 	"github.com/IvanDrf/polls-site/internal/errs"
 	"github.com/IvanDrf/polls-site/internal/models"
 	"github.com/IvanDrf/polls-site/internal/transport/auth"
+	"github.com/IvanDrf/polls-site/internal/transport/auth/cookies"
 )
 
 type Handler interface {
@@ -19,12 +20,15 @@ type Handler interface {
 
 type handler struct {
 	authService auth.Auther
-	logger      *slog.Logger
+	cookier     cookies.Cookier
+
+	logger *slog.Logger
 }
 
 func NewHandler(cfg *config.Config, db *sql.DB, logger *slog.Logger) Handler {
 	return handler{
 		authService: auth.NewAuthService(cfg, db),
+		cookier:     cookies.NewCookier(),
 		logger:      logger,
 	}
 }
@@ -85,6 +89,8 @@ func (hand handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(err)
 		return
 	}
+
+	hand.cookier.SetAuthCookies(w, token.Access, token.Refresh)
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(token)

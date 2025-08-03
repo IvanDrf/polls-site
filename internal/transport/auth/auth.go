@@ -10,7 +10,6 @@ import (
 
 	t "github.com/IvanDrf/polls-site/internal/repo/auth/tokens"
 	"github.com/IvanDrf/polls-site/internal/transport/auth/checker"
-	"github.com/IvanDrf/polls-site/internal/transport/auth/cookies"
 	"github.com/IvanDrf/polls-site/internal/transport/auth/jwt"
 )
 
@@ -24,8 +23,7 @@ type auth struct {
 	pswHasher  checker.PswHasher
 	emChecker  checker.EmailChecker
 
-	jwter   jwt.Jwter
-	cookier cookies.Cookier
+	jwter jwt.Jwter
 
 	userRepo  u.UserRepo
 	tokenRepo t.TokensRepo
@@ -37,8 +35,7 @@ func NewAuthService(cfg *config.Config, db *sql.DB) Auther {
 		pswHasher:  checker.NewPswHasher(),
 		emChecker:  checker.NewEmailChecker(),
 
-		jwter:   jwt.NewJwter(cfg),
-		cookier: cookies.NewCookier(),
+		jwter: jwt.NewJwter(cfg),
 
 		userRepo:  u.NewRepo(cfg, db),
 		tokenRepo: t.NewTokensRepo(cfg, db),
