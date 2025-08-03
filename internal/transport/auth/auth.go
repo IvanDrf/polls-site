@@ -6,7 +6,9 @@ import (
 	"github.com/IvanDrf/polls-site/config"
 	"github.com/IvanDrf/polls-site/internal/errs"
 	"github.com/IvanDrf/polls-site/internal/models"
-	repo "github.com/IvanDrf/polls-site/internal/repo/auth/user"
+	u "github.com/IvanDrf/polls-site/internal/repo/auth/user"
+
+	t "github.com/IvanDrf/polls-site/internal/repo/auth/tokens"
 	"github.com/IvanDrf/polls-site/internal/transport/auth/checker"
 	"github.com/IvanDrf/polls-site/internal/transport/auth/cookies"
 	"github.com/IvanDrf/polls-site/internal/transport/auth/jwt"
@@ -25,7 +27,8 @@ type auth struct {
 	jwter   jwt.Jwter
 	cookier cookies.Cookier
 
-	repo repo.UserRepo
+	userRepo  u.UserRepo
+	tokenRepo t.TokensRepo
 }
 
 func NewAuthService(cfg *config.Config, db *sql.DB) Auther {
@@ -37,7 +40,8 @@ func NewAuthService(cfg *config.Config, db *sql.DB) Auther {
 		jwter:   jwt.NewJwter(cfg),
 		cookier: cookies.NewCookier(),
 
-		repo: repo.NewRepo(cfg, db),
+		userRepo:  u.NewRepo(cfg, db),
+		tokenRepo: t.NewTokensRepo(cfg, db),
 	}
 }
 
@@ -50,13 +54,13 @@ func (a auth) RegisterUser(req *models.UserReq) error {
 		return errs.ErrInvalidPswInReg()
 	}
 
-	if res, err := a.repo.FindUserByEmail(req.Email); res.Id != 0 || err == nil {
+	if res, err := a.userRepo.FindUserByEmail(req.Email); res.Id != 0 || err == nil {
 		return errs.ErrAlreadyInDB()
 	}
 
 	req.Password = a.pswHasher.HashPassword(req.Password)
 
-	if err := a.repo.AddUser(req); err != nil {
+	if err := a.userRepo.AddUser(req); err != nil {
 		return errs.ErrCantRegister()
 	}
 
@@ -64,7 +68,7 @@ func (a auth) RegisterUser(req *models.UserReq) error {
 }
 
 func (a auth) LoginUser(req *models.UserReq) (string, string, error) {
-	user, err := a.repo.FindUserByEmail(req.Email)
+	user, err := a.userRepo.FindUserByEmail(req.Email)
 	if err != nil {
 		return "", "", errs.ErrCantFindUser()
 	}
@@ -74,7 +78,14 @@ func (a auth) LoginUser(req *models.UserReq) (string, string, error) {
 	}
 
 	accessToken, refreshToken, err := a.jwter.GenerateTokens(&user)
-	//TODO add tokens in database 'tokens'
+	if err != nil {
+		return "", "", err
+	}
+
+	err = a.tokenRepo.AddRefreshToken(user.Id, refreshToken)
+	if err != nil {
+		return "", "", errs.ErrCantAddToken()
+	}
 
 	return accessToken, refreshToken, err
 }

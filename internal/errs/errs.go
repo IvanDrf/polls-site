@@ -88,3 +88,8 @@ func ErrIncorrectJWTMethod() error {
 func ErrInValidToken() error {
 	return Error{Code: http.StatusBadRequest, Msg: "invalid jwt token"}
 }
+
+// Error of jwt token, cant add refresh token in database
+func ErrCantAddToken() error {
+	return Error{Code: http.StatusInternalServerError, Msg: "can't add refresh token to database"}
+}
