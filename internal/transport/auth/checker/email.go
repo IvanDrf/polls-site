@@ -15,6 +15,6 @@ func NewEmailChecker() EmailChecker {
 
 const re = `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
 
-func (this emailChecker) ValidEmail(em string) bool {
+func (c emailChecker) ValidEmail(em string) bool {
 	return regexp.MustCompile(re).MatchString(em)
 }
