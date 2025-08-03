@@ -1,4 +1,4 @@
-package jwt
+package jwter
 
 import (
 	"sync"
@@ -11,6 +11,7 @@ import (
 )
 
 type Jwter interface {
+	ParseToken(tokenSrt string) (*jwt.Token, error)
 	GenerateTokens(user *models.User) (string, string, error)
 
 	GenerateAccessJWT(user *models.User) (string, error)
@@ -28,13 +29,29 @@ func NewJwter(cfg *config.Config) Jwter {
 }
 
 const (
+	AccessToken  = "access_jwt"
+	RefreshToken = "refresh_jwt"
+
+	UserId = "user_id"
+
 	accessTime  = 24 * time.Hour
 	refreshTime = 7 * 24 * time.Hour
 )
 
+func (j jwter) ParseToken(tokenSrt string) (*jwt.Token, error) {
+	token, err := jwt.Parse(tokenSrt, func(t *jwt.Token) (interface{}, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errs.ErrIncorrectJWTMethod()
+		}
+
+		return j.jwtSecret, nil
+	})
+
+	return token, err
+}
+
 func (j jwter) GenerateTokens(user *models.User) (string, string, error) {
 	wg := new(sync.WaitGroup)
-	wg.Add(1)
 
 	accessToken, refreshToken := "", ""
 	var errAccess, errRefresh error
@@ -88,7 +105,11 @@ func (j jwter) IsValidJWT(tokenStr string) error {
 		return j.jwtSecret, nil
 	})
 
-	if err != nil || !token.Valid {
+	if err != nil {
+		return err
+	}
+
+	if !token.Valid {
 		return errs.ErrInValidToken()
 	}
 

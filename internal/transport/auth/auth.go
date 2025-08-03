@@ -23,7 +23,7 @@ type auth struct {
 	pswHasher  checker.PswHasher
 	emChecker  checker.EmailChecker
 
-	jwter jwt.Jwter
+	jwter jwter.Jwter
 
 	userRepo  u.UserRepo
 	tokenRepo t.TokensRepo
@@ -35,7 +35,7 @@ func NewAuthService(cfg *config.Config, db *sql.DB) Auther {
 		pswHasher:  checker.NewPswHasher(),
 		emChecker:  checker.NewEmailChecker(),
 
-		jwter: jwt.NewJwter(cfg),
+		jwter: jwter.NewJwter(cfg),
 
 		userRepo:  u.NewRepo(cfg, db),
 		tokenRepo: t.NewTokensRepo(cfg, db),

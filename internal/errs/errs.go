@@ -93,3 +93,8 @@ func ErrInValidToken() error {
 func ErrCantAddToken() error {
 	return Error{Code: http.StatusInternalServerError, Msg: "can't add refresh token to database"}
 }
+
+// Error of jwt token, cant find access token in cookies or header 'authorization'
+func ErrCantFindToken() error {
+	return Error{Code: http.StatusUnauthorized, Msg: "can't find access token in header/cookies"}
+}

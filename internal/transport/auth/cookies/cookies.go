@@ -1,6 +1,10 @@
 package cookies
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/IvanDrf/polls-site/internal/transport/auth/jwt"
+)
 
 type Cookier interface {
 	SetAuthCookies(w http.ResponseWriter, access, refresh string)
@@ -15,7 +19,7 @@ func NewCookier() Cookier {
 
 func (c cookier) SetAuthCookies(w http.ResponseWriter, access, refresh string) {
 	http.SetCookie(w, &http.Cookie{
-		Name:     "access_jwt",
+		Name:     jwter.AccessToken,
 		Value:    access,
 		Path:     "/",
 		Secure:   true,
@@ -23,7 +27,7 @@ func (c cookier) SetAuthCookies(w http.ResponseWriter, access, refresh string) {
 	})
 
 	http.SetCookie(w, &http.Cookie{
-		Name:     "refresh_jwt",
+		Name:     jwter.RefreshToken,
 		Value:    refresh,
 		Path:     "/",
 		Secure:   true,

@@ -34,6 +34,8 @@ func NewHandler(cfg *config.Config, db *sql.DB, logger *slog.Logger) Handler {
 }
 
 func (hand handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
+	hand.logger.Info("register req")
+
 	w.Header().Set("Content-Type", "application/json")
 
 	if w.Header().Get("Content-Type") != "application/json" {
@@ -54,6 +56,7 @@ func (hand handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	token := models.JWT{}
 	var err error
 
+	hand.logger.Debug("start users registration")
 	token.Access, token.Refresh, err = hand.authService.RegisterUser(&req)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
@@ -61,6 +64,10 @@ func (hand handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(err)
 		return
 	}
+
+	hand.logger.Debug("end user registration")
+
+	hand.cookier.SetAuthCookies(w, token.Access, token.Refresh)
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(token)
@@ -86,6 +93,7 @@ func (hand handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 
 	token := models.JWT{}
 	var err error
+
 	token.Access, token.Refresh, err = hand.authService.LoginUser(&user)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
