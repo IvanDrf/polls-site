@@ -51,7 +51,11 @@ func (hand handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := hand.authService.RegisterUser(&req); err != nil {
+	token := models.JWT{}
+	var err error
+
+	token.Access, token.Refresh, err = hand.authService.RegisterUser(&req)
+	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 
 		json.NewEncoder(w).Encode(err)
@@ -59,7 +63,7 @@ func (hand handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"success": "true"})
+	json.NewEncoder(w).Encode(token)
 }
 
 func (hand handler) LoginUser(w http.ResponseWriter, r *http.Request) {

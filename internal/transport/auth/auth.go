@@ -14,7 +14,7 @@ import (
 )
 
 type Auther interface {
-	RegisterUser(req *models.UserReq) error
+	RegisterUser(req *models.UserReq) (string, string, error)
 	LoginUser(req *models.UserReq) (string, string, error)
 }
 
@@ -42,26 +42,41 @@ func NewAuthService(cfg *config.Config, db *sql.DB) Auther {
 	}
 }
 
-func (a auth) RegisterUser(req *models.UserReq) error {
+func (a auth) RegisterUser(req *models.UserReq) (string, string, error) {
 	if !a.emChecker.ValidEmail(req.Email) {
-		return errs.ErrInvalidEmailInReg()
+		return "", "", errs.ErrInvalidEmailInReg()
 	}
 
 	if !a.pswChecker.ValidPassword(req.Password) {
-		return errs.ErrInvalidPswInReg()
+		return "", "", errs.ErrInvalidPswInReg()
 	}
 
 	if res, err := a.userRepo.FindUserByEmail(req.Email); res.Id != 0 || err == nil {
-		return errs.ErrAlreadyInDB()
+		return "", "", errs.ErrAlreadyInDB()
 	}
 
 	req.Password = a.pswHasher.HashPassword(req.Password)
 
 	if err := a.userRepo.AddUser(req); err != nil {
-		return errs.ErrCantRegister()
+		return "", "", errs.ErrCantRegister()
 	}
 
-	return nil
+	user, err := a.userRepo.FindUserByEmail(req.Email)
+	if err != nil {
+		return "", "", errs.ErrCantRegister()
+	}
+
+	accessToken, refreshToken, err := a.jwter.GenerateTokens(&user)
+	if err != nil {
+		return "", "", err
+	}
+
+	err = a.tokenRepo.AddRefreshToken(user.Id, refreshToken)
+	if err != nil {
+		return "", "", errs.ErrCantAddToken()
+	}
+
+	return accessToken, refreshToken, nil
 }
 
 func (a auth) LoginUser(req *models.UserReq) (string, string, error) {
