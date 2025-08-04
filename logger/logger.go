@@ -23,7 +23,7 @@ func InitLogger(cfg *config.Config) *slog.Logger {
 	switch cfg.Logger {
 	case debugLevel:
 		level = slog.LevelDebug
-		source = false
+		source = true
 
 	case infoLevel:
 		level = slog.LevelInfo
