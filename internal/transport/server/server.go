@@ -22,7 +22,7 @@ type Server struct {
 func NewServer(cfg *config.Config, db *sql.DB, logger *slog.Logger) *Server {
 	return &Server{
 		server:     http.NewServeMux(),
-		middleware: auth.NewMiddleware(cfg, db),
+		middleware: auth.NewMiddleware(cfg, logger),
 		handler:    handlers.NewHandler(cfg, db, logger),
 	}
 }
@@ -37,4 +37,7 @@ func (s *Server) Start(cfg *config.Config) {
 func (s *Server) RegisterRoutes() {
 	s.server.HandleFunc("POST /register", s.handler.RegisterUser)
 	s.server.HandleFunc("POST /login", s.handler.LoginUser)
+	s.server.HandleFunc("POST /refresh", s.handler.RefreshTokens)
+
+	s.server.HandleFunc("GET /private", s.middleware.AuthMiddleware(s.handler.Private))
 }

@@ -2,20 +2,25 @@ package auth
 
 import (
 	"database/sql"
+	"log/slog"
+	"net/http"
 
 	"github.com/IvanDrf/polls-site/config"
 	"github.com/IvanDrf/polls-site/internal/errs"
 	"github.com/IvanDrf/polls-site/internal/models"
 	u "github.com/IvanDrf/polls-site/internal/repo/auth/user"
+	"github.com/golang-jwt/jwt"
 
 	t "github.com/IvanDrf/polls-site/internal/repo/auth/tokens"
 	"github.com/IvanDrf/polls-site/internal/transport/auth/checker"
-	"github.com/IvanDrf/polls-site/internal/transport/auth/jwt"
+	jwter "github.com/IvanDrf/polls-site/internal/transport/auth/jwt"
 )
 
 type Auther interface {
 	RegisterUser(req *models.UserReq) (string, string, error)
 	LoginUser(req *models.UserReq) (string, string, error)
+
+	RefreshTokens(r *http.Request) (string, string, error)
 }
 
 type auth struct {
@@ -27,9 +32,11 @@ type auth struct {
 
 	userRepo  u.UserRepo
 	tokenRepo t.TokensRepo
+
+	logger *slog.Logger
 }
 
-func NewAuthService(cfg *config.Config, db *sql.DB) Auther {
+func NewAuthService(cfg *config.Config, db *sql.DB, logger *slog.Logger) Auther {
 	return auth{
 		pswChecker: checker.NewPSWChecker(),
 		pswHasher:  checker.NewPswHasher(),
@@ -39,10 +46,14 @@ func NewAuthService(cfg *config.Config, db *sql.DB) Auther {
 
 		userRepo:  u.NewRepo(cfg, db),
 		tokenRepo: t.NewTokensRepo(cfg, db),
+
+		logger: logger,
 	}
 }
 
 func (a auth) RegisterUser(req *models.UserReq) (string, string, error) {
+	a.logger.Info("auth -> Register")
+
 	if !a.emChecker.ValidEmail(req.Email) {
 		return "", "", errs.ErrInvalidEmailInReg()
 	}
@@ -80,6 +91,8 @@ func (a auth) RegisterUser(req *models.UserReq) (string, string, error) {
 }
 
 func (a auth) LoginUser(req *models.UserReq) (string, string, error) {
+	a.logger.Info("auth -> Login")
+
 	user, err := a.userRepo.FindUserByEmail(req.Email)
 	if err != nil {
 		return "", "", errs.ErrCantFindUser()
@@ -94,12 +107,52 @@ func (a auth) LoginUser(req *models.UserReq) (string, string, error) {
 		return "", "", err
 	}
 
-	err = a.tokenRepo.AddRefreshToken(user.Id, refreshToken)
+	tokenInDB, err := a.tokenRepo.FindRefreshToken(user.Id)
 	if err != nil {
-		return "", "", errs.ErrCantAddToken()
+		err = a.tokenRepo.AddRefreshToken(user.Id, refreshToken)
+		if err != nil {
+			return "", "", errs.ErrCantAddToken()
+		}
+	} else {
+		err = a.tokenRepo.UpdateRefreshToken(tokenInDB.UserId, refreshToken)
 	}
 
 	return accessToken, refreshToken, err
 }
 
-//TODO write refresh, so user doesn't need to login always
+func (a auth) RefreshTokens(r *http.Request) (string, string, error) {
+	a.logger.Info("auth -> Refresh")
+	refreshToken, err := a.jwter.GetToken(r, jwter.RefreshToken)
+	if err != nil {
+		return "", "", err
+	}
+
+	token, err := a.jwter.ParseToken(refreshToken)
+	if err != nil {
+		return "", "", err
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return "", "", errs.ErrInValidToken()
+	}
+
+	userId := int(claims[jwter.UserId].(float64))
+
+	user, err := a.userRepo.FindUserById(userId)
+	if err != nil {
+		return "", "", errs.ErrInValidToken()
+	}
+
+	accessToken, refreshToken, err := a.jwter.GenerateTokens(&user)
+	if err != nil {
+		return "", "", errs.ErrCantCreateToken()
+	}
+
+	err = a.tokenRepo.UpdateRefreshToken(userId, refreshToken)
+	if err != nil {
+		return "", "", errs.ErrCantAddToken()
+	}
+
+	return accessToken, refreshToken, nil
+}

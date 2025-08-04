@@ -5,12 +5,16 @@ import (
 	"fmt"
 
 	"github.com/IvanDrf/polls-site/config"
+	"github.com/IvanDrf/polls-site/internal/models"
 )
 
 const tokensTable = "tokens"
 
 type TokensRepo interface {
 	AddRefreshToken(userId int, refresh string) error
+	UpdateRefreshToken(userId int, refresh string) error
+
+	FindRefreshToken(userId int) (models.JWT, error)
 }
 
 // TODO write find method
@@ -28,4 +32,25 @@ func (t tokensRepo) AddRefreshToken(userId int, refresh string) error {
 	_, err := t.db.Exec(query, userId, refresh)
 
 	return err
+}
+
+func (t tokensRepo) UpdateRefreshToken(userId int, refresh string) error {
+	query := fmt.Sprintf("UPDATE %s.%s SET token = ? WHERE user_id = ?", t.dbName, tokensTable)
+	_, err := t.db.Exec(query, refresh, userId)
+
+	return err
+}
+
+func (t tokensRepo) FindRefreshToken(userId int) (models.JWT, error) {
+	query := fmt.Sprintf("SELECT * FROM %s.%s WHERE user_id = ?", t.dbName, tokensTable)
+	res := t.db.QueryRow(query, userId)
+
+	token := models.JWT{}
+	fmt.Println(res)
+	if err := res.Scan(&token.Id, &token.UserId, &token.Refresh); err != nil {
+		fmt.Println("shiiiiit")
+		return models.JWT{}, err
+	}
+
+	return token, nil
 }

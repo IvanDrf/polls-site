@@ -13,6 +13,8 @@ type User struct {
 }
 
 type JWT struct {
+	UserId  int    `json:"-"`
+	Id      int    `json:"-"`
 	Access  string `json:"access_token"`
 	Refresh string `json:"refresh_token"`
 }

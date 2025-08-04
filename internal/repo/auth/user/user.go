@@ -49,7 +49,7 @@ func (r repo) FindUserByEmail(em string) (models.User, error) {
 }
 
 func (r repo) FindUserById(id int) (models.User, error) {
-	query := fmt.Sprintf("SELECT id, email, passw FROM %s.%s WHERE email= ?", r.dbName, userTable)
+	query := fmt.Sprintf("SELECT id, email, passw FROM %s.%s WHERE id = ?", r.dbName, userTable)
 	res := r.db.QueryRow(query, id)
 
 	user := models.User{}
