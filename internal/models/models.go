@@ -6,13 +6,17 @@ type UserReq struct {
 	Password string `json:"password"`
 }
 
+// User in db
 type User struct {
 	Id       int    `json:"id"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
+// JWT in db
 type JWT struct {
+	UserId  int    `json:"-"`
+	Id      int    `json:"-"`
 	Access  string `json:"access_token"`
 	Refresh string `json:"refresh_token"`
 }

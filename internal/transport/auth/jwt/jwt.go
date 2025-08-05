@@ -2,7 +2,6 @@ package jwter
 
 import (
 	"net/http"
-	"strings"
 	"sync"
 	"time"
 
@@ -18,12 +17,14 @@ const (
 
 	UserId = "user_id"
 
-	accessTime  = 24 * time.Hour
+	accessTime  = 15 * time.Minute
 	refreshTime = 7 * 24 * time.Hour
 )
 
 type Jwter interface {
-	GetToken(r *http.Request) (string, error)
+	// Get access/refresh token from cookies
+	GetToken(r *http.Request, tokenType string) (string, error)
+
 	ParseToken(tokenSrt string) (*jwt.Token, error)
 
 	GenerateTokens(user *models.User) (string, string, error)
@@ -41,17 +42,21 @@ func NewJwter(cfg *config.Config) Jwter {
 	return jwter{jwtSecret: cfg.JWT}
 }
 
-// Get token from header/cookies
-func (j jwter) GetToken(r *http.Request) (string, error) {
-	authHeader := r.Header.Get("Authorization")
-	if authHeader != "" {
-		tokenParts := strings.Split(authHeader, " ")
-		if len(tokenParts) == 2 && tokenParts[0] == "Bearer" {
-			return tokenParts[1], nil
-		}
+func (j jwter) GetToken(r *http.Request, tokenType string) (string, error) {
+	if tokenType != AccessToken && tokenType != RefreshToken {
+		return "", errs.ErrInValidToken()
 	}
 
-	cookie, err := r.Cookie(AccessToken)
+	cookie, err := r.Cookie(tokenType)
+	if err != nil {
+		return "", errs.ErrCantFindToken()
+	}
+
+	return cookie.Value, nil
+}
+
+func (j jwter) GetRefreshToken(r *http.Request) (string, error) {
+	cookie, err := r.Cookie(RefreshToken)
 	if err != nil {
 		return "", errs.ErrCantFindToken()
 	}
