@@ -24,7 +24,10 @@ type tokensRepo struct {
 }
 
 func NewTokensRepo(cfg *config.Config, db *sql.DB) TokensRepo {
-	return tokensRepo{dbName: cfg.DBName, db: db}
+	return tokensRepo{
+		dbName: cfg.DBName,
+		db:     db,
+	}
 }
 
 func (t tokensRepo) AddRefreshToken(userId int, refresh string) error {

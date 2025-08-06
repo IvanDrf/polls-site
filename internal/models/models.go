@@ -15,8 +15,31 @@ type User struct {
 
 // JWT in db
 type JWT struct {
-	UserId  int    `json:"-"`
 	Id      int    `json:"-"`
+	UserId  int    `json:"-"`
 	Access  string `json:"access_token"`
 	Refresh string `json:"refresh_token"`
+}
+
+type Question struct {
+	Id       int    `json:"id"`
+	Question string `json:"question"`
+}
+
+type Answer struct {
+	Id         int    `json:"id"`
+	QuestionId int    `json:"q_id"`
+	Answer     string `json:"answer"`
+}
+
+type Vote struct {
+	Id         int    `json:"id"`
+	QuestionId int    `json:"q_id"`
+	Answer     string `json:"answer"`
+	UserId     int    `json:"user_id"`
+}
+
+type Poll struct {
+	Question string   `json:"question"`
+	Answers  []string `json:"answers"`
 }
