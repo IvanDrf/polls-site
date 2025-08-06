@@ -35,9 +35,11 @@ func (s *Server) Start(cfg *config.Config) {
 }
 
 func (s *Server) RegisterRoutes() {
-	s.server.HandleFunc("POST /register", s.handler.RegisterUser)
-	s.server.HandleFunc("POST /login", s.handler.LoginUser)
-	s.server.HandleFunc("POST /refresh", s.handler.RefreshTokens)
+	s.server.HandleFunc("POST /register", s.handler.RegisterUser) // auth
+	s.server.HandleFunc("POST /login", s.handler.LoginUser)       //auth
+	s.server.HandleFunc("POST /refresh", s.handler.RefreshTokens) // auth
 
-	s.server.HandleFunc("GET /private", s.middleware.AuthMiddleware(s.handler.Private))
+	s.server.HandleFunc("POST /poll/create", s.middleware.AuthMiddleware(s.handler.CreatePoll)) // poll
+
+	s.server.HandleFunc("GET /private", s.middleware.AuthMiddleware(s.handler.Private)) //private test
 }

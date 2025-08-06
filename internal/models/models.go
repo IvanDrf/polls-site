@@ -38,3 +38,8 @@ type Vote struct {
 	Answer     string `json:"answer"`
 	UserId     int    `json:"user_id"`
 }
+
+type Poll struct {
+	Question string   `json:"question"`
+	Answers  []string `json:"answers"`
+}
