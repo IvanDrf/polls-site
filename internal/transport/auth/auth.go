@@ -8,10 +8,10 @@ import (
 	"github.com/IvanDrf/polls-site/config"
 	"github.com/IvanDrf/polls-site/internal/errs"
 	"github.com/IvanDrf/polls-site/internal/models"
-	u "github.com/IvanDrf/polls-site/internal/repo/auth/user"
+	"github.com/IvanDrf/polls-site/internal/repo/auth/users"
 	"github.com/golang-jwt/jwt"
 
-	t "github.com/IvanDrf/polls-site/internal/repo/auth/tokens"
+	"github.com/IvanDrf/polls-site/internal/repo/auth/tokens"
 	"github.com/IvanDrf/polls-site/internal/transport/auth/checker"
 	jwter "github.com/IvanDrf/polls-site/internal/transport/auth/jwt"
 )
@@ -30,8 +30,8 @@ type auth struct {
 
 	jwter jwter.Jwter
 
-	userRepo  u.UserRepo
-	tokenRepo t.TokensRepo
+	userRepo  users.UserRepo
+	tokenRepo tokens.TokensRepo
 
 	logger *slog.Logger
 }
@@ -44,8 +44,8 @@ func NewAuthService(cfg *config.Config, db *sql.DB, logger *slog.Logger) Auther 
 
 		jwter: jwter.NewJwter(cfg),
 
-		userRepo:  u.NewRepo(cfg, db),
-		tokenRepo: t.NewTokensRepo(cfg, db),
+		userRepo:  users.NewRepo(cfg, db),
+		tokenRepo: tokens.NewTokensRepo(cfg, db),
 
 		logger: logger,
 	}
