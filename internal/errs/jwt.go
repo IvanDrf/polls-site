@@ -2,6 +2,11 @@ package errs
 
 import "net/http"
 
+// Error of jwt token, cant create new jwt token
+func ErrCantCreateToken() error {
+	return Error{Code: http.StatusInternalServerError, Msg: "can't create jwt token"}
+}
+
 // Error of jwt token, incorrect signing method
 func ErrIncorrectJWTMethod() error {
 	return Error{Code: http.StatusBadRequest, Msg: "invalid jwt signing method"}
