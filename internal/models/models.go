@@ -23,6 +23,7 @@ type JWT struct {
 
 type Question struct {
 	Id       int    `json:"id"`
+	UserId   int    `json:"-"`
 	Question string `json:"question"`
 }
 
@@ -34,12 +35,13 @@ type Answer struct {
 
 type Vote struct {
 	Id         int    `json:"id"`
+	UserId     int    `json:"user_id"`
 	QuestionId int    `json:"q_id"`
 	Answer     string `json:"answer"`
-	UserId     int    `json:"user_id"`
 }
 
 type Poll struct {
 	Question string   `json:"question"`
+	UserId   int      `json:"-"`
 	Answers  []string `json:"answers"`
 }

@@ -15,6 +15,7 @@ type TokensRepo interface {
 	UpdateRefreshToken(userId int, refresh string) error
 
 	FindRefreshToken(userId int) (models.JWT, error)
+	FindUserId(refreshToken string) (int, error)
 }
 
 // TODO write find method
@@ -49,11 +50,21 @@ func (t tokensRepo) FindRefreshToken(userId int) (models.JWT, error) {
 	res := t.db.QueryRow(query, userId)
 
 	token := models.JWT{}
-	fmt.Println(res)
 	if err := res.Scan(&token.Id, &token.UserId, &token.Refresh); err != nil {
-		fmt.Println("shiiiiit")
 		return models.JWT{}, err
 	}
 
 	return token, nil
+}
+
+func (t tokensRepo) FindUserId(refreshToken string) (int, error) {
+	query := fmt.Sprintf("SELECT * FROM %s.%s WHERE token = ?", t.dbName, tokensTable)
+	res := t.db.QueryRow(query, refreshToken)
+
+	token := models.JWT{}
+	if err := res.Scan(&token.Id, &token.UserId, &token.Refresh); err != nil {
+		return -1, err
+	}
+
+	return token.UserId, nil
 }

@@ -13,7 +13,7 @@ const (
 )
 
 type QuestionRepo interface {
-	AddQuestionPoll(question string) error
+	AddQuestionPoll(poll *models.Poll) error
 	DeleteQuestionPoll(question *models.Question) error
 
 	FindQuestionPoll(question string) (models.Question, error)
@@ -31,9 +31,9 @@ func NewQuestionRepo(cfg *config.Config, db *sql.DB) QuestionRepo {
 	}
 }
 
-func (r questionRepo) AddQuestionPoll(question string) error {
-	query := fmt.Sprintf("INSERT INTO %s.%s (question) VALUES (?)", r.dbName, questionTable)
-	_, err := r.db.Exec(query, question)
+func (r questionRepo) AddQuestionPoll(poll *models.Poll) error {
+	query := fmt.Sprintf("INSERT INTO %s.%s (question, user_id) VALUES (?, ?)", r.dbName, questionTable)
+	_, err := r.db.Exec(query, poll.Question, poll.UserId)
 
 	return err
 }
@@ -50,6 +50,6 @@ func (r questionRepo) FindQuestionPoll(question string) (models.Question, error)
 	res := r.db.QueryRow(query, question)
 
 	ques := models.Question{}
-	err := res.Scan(&ques.Question, &ques.Id)
+	err := res.Scan(&ques.Question, &ques.Id, &ques.UserId)
 	return ques, err
 }

@@ -30,7 +30,7 @@ func (h handler) CreatePoll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.pollServeice.AddPoll(&poll); err != nil {
+	if err := h.pollServeice.AddPoll(&poll, r); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 
 		json.NewEncoder(w).Encode(err)
