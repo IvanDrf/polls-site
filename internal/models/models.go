@@ -41,7 +41,12 @@ type Vote struct {
 }
 
 type Poll struct {
+	Id       int      `json:"id"`
 	Question string   `json:"question"`
 	UserId   int      `json:"-"`
 	Answers  []string `json:"answers"`
+}
+
+type PollId struct {
+	Id int `json:"poll_id"`
 }

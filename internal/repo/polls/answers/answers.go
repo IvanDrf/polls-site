@@ -70,6 +70,13 @@ func (r answersRepo) AddAnswers(answ []string, questionId int) error {
 	return nil
 }
 
+func (r answersRepo) deleteAnswer(questionId int) error {
+	query := fmt.Sprintf("DELETE FROM %s.%s WHERE question_id = ?", r.dbName, answersTable)
+	_, err := r.db.Exec(query, questionId)
+
+	return err
+}
+
 func (r answersRepo) DeleteAnswer(answ *models.Answer) error {
 	query := fmt.Sprintf("DELETE FROM %s.%s WHERE answ = ? AND question_id = ?", r.dbName, answersTable)
 	_, err := r.db.Exec(query, answ.Answer, answ.QuestionId)
@@ -85,10 +92,7 @@ func (r answersRepo) DeleteAnswers(answ []string, questionId int) error {
 		wg.Add(1)
 		go func(i int, fail *bool) {
 			defer wg.Done()
-			err := r.DeleteAnswer(&models.Answer{
-				Answer:     answ[i],
-				QuestionId: questionId,
-			})
+			err := r.deleteAnswer(questionId)
 
 			if err != nil {
 				*fail = true

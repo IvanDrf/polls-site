@@ -3,7 +3,6 @@ package handlers
 import (
 	"database/sql"
 	"log/slog"
-	"net/http"
 
 	"github.com/IvanDrf/polls-site/config"
 	"github.com/IvanDrf/polls-site/internal/service"
@@ -14,7 +13,6 @@ import (
 type Handler interface {
 	AuthHandler
 	PollHandler
-	Private(w http.ResponseWriter, r *http.Request)
 }
 
 type handler struct {
@@ -33,8 +31,4 @@ func NewHandler(cfg *config.Config, db *sql.DB, logger *slog.Logger) Handler {
 		cookier:      cookies.NewCookier(),
 		logger:       logger,
 	}
-}
-
-func (h handler) Private(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("hello private\n"))
 }

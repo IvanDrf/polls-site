@@ -15,7 +15,8 @@ import (
 )
 
 type PollService interface {
-	AddPoll(poll *models.Poll, r *http.Request) error
+	AddPoll(poll *models.Poll, r *http.Request) (models.PollId, error)
+	DeletePoll(poll *models.Poll) error
 }
 
 type pollService struct {
@@ -39,33 +40,47 @@ func NewPollService(cfg *config.Config, db *sql.DB) PollService {
 }
 
 // TODO: add user id in question -> see man, who created poll
-func (p pollService) AddPoll(poll *models.Poll, r *http.Request) error {
+func (p pollService) AddPoll(poll *models.Poll, r *http.Request) (models.PollId, error) {
 	token, err := p.jwter.GetToken(r, jwter.RefreshToken)
 	if err != nil {
-		return err
+		return models.PollId{}, err
 	}
 
 	poll.UserId, err = p.tokensRepo.FindUserId(token)
 	if err != nil {
-		return errs.ErrCantFindUser()
+		return models.PollId{}, errs.ErrCantFindUser()
 	}
 
-	err = p.questRepo.AddQuestionPoll(poll)
+	questionId, err := p.questRepo.AddQuestionPoll(poll)
 	if err != nil {
-		return errs.ErrCantAddQuestion()
+		return models.PollId{}, errs.ErrCantAddQuestion()
 	}
 
-	question, err := p.questRepo.FindQuestionPoll(poll.Question)
+	err = p.answRepo.AddAnswers(poll.Answers, questionId)
 	if err != nil {
-		return errs.ErrCantAddQuestion()
+		p.answRepo.DeleteAnswers(poll.Answers, questionId)
+		p.questRepo.DeleteQuestionPollById(questionId)
+
+		return models.PollId{}, err
 	}
 
-	err = p.answRepo.AddAnswers(poll.Answers, question.Id)
-	if err != nil {
-		p.answRepo.DeleteAnswers(poll.Answers, question.Id)
-		p.questRepo.DeleteQuestionPoll(&question)
+	return models.PollId{Id: questionId}, nil
+}
 
-		return err
+func (p pollService) DeletePoll(poll *models.Poll) error {
+	question, err := p.questRepo.FindQuestionPollById(poll.Id)
+	if err != nil {
+		return errs.ErrCantFindQuestion()
+	}
+
+	err = p.answRepo.DeleteAnswers(poll.Answers, question.Id)
+	if err != nil {
+		return errs.ErrCantAddAnswer()
+	}
+
+	err = p.questRepo.DeleteQuestionPollById(question.Id)
+	if err != nil {
+		return errs.ErrCantDeleteQuestion()
 	}
 
 	return nil

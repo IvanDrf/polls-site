@@ -28,6 +28,14 @@ func ErrCantDeleteAnswer() error {
 	return Error{Code: http.StatusInternalServerError, Msg: "can't delete answer in db"}
 }
 
+func ErrCantDeleteQuestion() error {
+	return Error{Code: http.StatusInternalServerError, Msg: "can't delete question in db"}
+}
+
 func ErrCantFindUserId() error {
 	return Error{Code: http.StatusInternalServerError, Msg: "can't find user id in db"}
+}
+
+func ErrCantFindQuestion() error {
+	return Error{Code: http.StatusNotFound, Msg: "can't find question in db"}
 }
