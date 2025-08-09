@@ -56,7 +56,7 @@ func (p pollService) AddPoll(poll *models.Poll, r *http.Request) (models.PollId,
 		return models.PollId{}, errs.ErrCantAddQuestion()
 	}
 
-	err = p.answRepo.AddAnswers(poll.Answers, questionId)
+	answId, err := p.answRepo.AddAnswers(poll.Answers, questionId)
 	if err != nil {
 		p.answRepo.DeleteAnswers(poll.Answers, questionId)
 		p.questRepo.DeleteQuestionPollById(questionId)
@@ -64,7 +64,7 @@ func (p pollService) AddPoll(poll *models.Poll, r *http.Request) (models.PollId,
 		return models.PollId{}, err
 	}
 
-	return models.PollId{Id: questionId}, nil
+	return models.PollId{Id: questionId, AnswersId: answId}, nil
 }
 
 func (p pollService) DeletePoll(poll *models.Poll) error {

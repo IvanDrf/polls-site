@@ -13,8 +13,8 @@ import (
 const answersTable = "answers"
 
 type AnswersRepo interface {
-	AddAnswer(answ *models.Answer) error
-	AddAnswers(answ []string, questionId int) error
+	AddAnswer(answ *models.Answer) (int, error)
+	AddAnswers(answ []string, questionId int) ([]int, error)
 
 	DeleteAnswer(answ *models.Answer) error
 	DeleteAnswers(answ []string, questionId int) error
@@ -34,26 +34,37 @@ func NewAnswersRepo(cfg *config.Config, db *sql.DB) AnswersRepo {
 	}
 }
 
-func (r answersRepo) AddAnswer(answ *models.Answer) error {
+func (r answersRepo) AddAnswer(answ *models.Answer) (int, error) {
 	query := fmt.Sprintf("INSERT INTO %s.%s (answ, question_id) VALUES (?, ?)", r.dbName, answersTable)
-	_, err := r.db.Exec(query, answ.Answer, answ.QuestionId)
+	res, err := r.db.Exec(query, answ.Answer, answ.QuestionId)
+	if err != nil {
+		return -1, err
+	}
 
-	return err
+	id, err := res.LastInsertId()
+
+	return int(id), err
 }
 
-func (r answersRepo) AddAnswers(answ []string, questionId int) error {
+func (r answersRepo) AddAnswers(answ []string, questionId int) ([]int, error) {
+	answId := make([]int, 0, len(answ))
+
 	fail := false
 	wg := new(sync.WaitGroup)
+	mu := new(sync.Mutex)
 
 	for i := range answ {
 		wg.Add(1)
 		go func(i int, fail *bool) {
 			defer wg.Done()
-			err := r.AddAnswer(&models.Answer{
+			id, err := r.AddAnswer(&models.Answer{
 				QuestionId: questionId,
 				Answer:     answ[i],
 			})
 
+			mu.Lock()
+			answId = append(answId, id)
+			mu.Unlock()
 			if err != nil {
 				*fail = true
 			}
@@ -64,10 +75,10 @@ func (r answersRepo) AddAnswers(answ []string, questionId int) error {
 	wg.Wait()
 
 	if fail {
-		return errs.ErrCantAddAnswer()
+		return nil, errs.ErrCantAddAnswer()
 	}
 
-	return nil
+	return answId, nil
 }
 
 func (r answersRepo) deleteAnswer(questionId int) error {

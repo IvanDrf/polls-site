@@ -48,5 +48,6 @@ type Poll struct {
 }
 
 type PollId struct {
-	Id int `json:"poll_id"`
+	Id        int   `json:"question_id"`
+	AnswersId []int `json:"answers_id"`
 }
