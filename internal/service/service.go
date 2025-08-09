@@ -88,6 +88,7 @@ func (p pollService) DeletePoll(poll *models.Poll) error {
 	return nil
 }
 
+// TODO: add check for question and answers id in databases
 func (p pollService) VoteInPoll(vote *models.Vote, r *http.Request) (models.PollRes, error) {
 	token, err := p.jwter.GetToken(r, jwter.RefreshToken)
 	if err != nil {
