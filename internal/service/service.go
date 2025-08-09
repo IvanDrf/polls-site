@@ -17,6 +17,8 @@ import (
 type PollService interface {
 	AddPoll(poll *models.Poll, r *http.Request) (models.PollId, error)
 	DeletePoll(poll *models.Poll) error
+
+	VoteInPoll(vote *models.Vote, r *http.Request) (models.PollRes, error)
 }
 
 type pollService struct {
@@ -48,7 +50,7 @@ func (p pollService) AddPoll(poll *models.Poll, r *http.Request) (models.PollId,
 
 	poll.UserId, err = p.tokensRepo.FindUserId(token)
 	if err != nil {
-		return models.PollId{}, errs.ErrCantFindUser()
+		return models.PollId{}, errs.ErrCantFindUserId()
 	}
 
 	questionId, err := p.questRepo.AddQuestionPoll(poll)
@@ -84,4 +86,33 @@ func (p pollService) DeletePoll(poll *models.Poll) error {
 	}
 
 	return nil
+}
+
+func (p pollService) VoteInPoll(vote *models.Vote, r *http.Request) (models.PollRes, error) {
+	token, err := p.jwter.GetToken(r, jwter.RefreshToken)
+	if err != nil {
+		return models.PollRes{}, err
+	}
+
+	vote.UserId, err = p.tokensRepo.FindUserId(token)
+	if err != nil {
+		return models.PollRes{}, errs.ErrCantFindUserId()
+	}
+
+	_, err = p.votesRepo.FindVote(vote.QuestionId, vote.UserId)
+	if err == nil {
+		return models.PollRes{}, errs.ErrAlreadyVoted()
+	}
+
+	_, err = p.votesRepo.AddVote(vote)
+	if err != nil {
+		return models.PollRes{}, errs.ErrCantAddVote()
+	}
+
+	res, err := p.votesRepo.CountVotes(vote.QuestionId)
+	if err != nil {
+		return models.PollRes{}, errs.ErrCantCountVotes()
+	}
+
+	return res, nil
 }

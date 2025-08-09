@@ -34,10 +34,15 @@ type Answer struct {
 }
 
 type Vote struct {
-	Id         int    `json:"id"`
-	UserId     int    `json:"user_id"`
-	QuestionId int    `json:"q_id"`
-	Answer     string `json:"answer"`
+	Id         int `json:"id"`
+	UserId     int `json:"user_id"`
+	QuestionId int `json:"question_id"`
+	AnswerId   int `json:"answer_id"`
+}
+
+type PollRes struct {
+	QuestionId int         `json:"question_id"`
+	Answers    map[int]int `json:"answers"`
 }
 
 type Poll struct {

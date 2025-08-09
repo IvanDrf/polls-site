@@ -11,6 +11,8 @@ import (
 type PollHandler interface {
 	CreatePoll(w http.ResponseWriter, r *http.Request)
 	DeletePoll(w http.ResponseWriter, r *http.Request)
+
+	VoteInPoll(w http.ResponseWriter, r *http.Request)
 }
 
 func (h handler) CreatePoll(w http.ResponseWriter, r *http.Request) {
@@ -74,4 +76,34 @@ func (h handler) DeletePoll(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h handler) VoteInPoll(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Header.Get("Content-Type") != "application/json" {
+		w.WriteHeader(http.StatusUnsupportedMediaType)
+
+		json.NewEncoder(w).Encode(errs.ErrInvalidBodyType())
+		return
+	}
+
+	vote := models.Vote{}
+	if err := json.NewDecoder(r.Body).Decode(&vote); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+
+		json.NewEncoder(w).Encode(errs.ErrInvalidBodyReq())
+		return
+	}
+
+	votes, err := h.pollServeice.VoteInPoll(&vote, r)
+	if err != nil {
+		w.WriteHeader(errs.GetCode(err))
+
+		json.NewEncoder(w).Encode(err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(votes)
 }
