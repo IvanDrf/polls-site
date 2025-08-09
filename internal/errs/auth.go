@@ -7,6 +7,11 @@ func ErrAlreadyInDB() error {
 	return Error{Code: http.StatusUnauthorized, Msg: "user with this email already exists"}
 }
 
+// Error of finding user's id in database
+func ErrCantFindUserId() error {
+	return Error{Code: http.StatusInternalServerError, Msg: "can't find user id in db"}
+}
+
 // Error of registration, invalid email, doesn't mathc regual expr
 func ErrInvalidEmailInReg() error {
 	return Error{Code: http.StatusUnauthorized, Msg: "incorrect email during registration"}
@@ -30,9 +35,4 @@ func ErrCantFindUser() error {
 // Error of password, incorrect password during logging
 func ErrInvalidPswInLog() error {
 	return Error{Code: http.StatusUnauthorized, Msg: "incorrect password"}
-}
-
-// Error of jwt token, cant create new jwt token
-func ErrCantCreateToken() error {
-	return Error{Code: http.StatusInternalServerError, Msg: "can't create jwt token"}
 }

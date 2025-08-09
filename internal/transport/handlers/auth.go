@@ -20,7 +20,7 @@ func (h handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
-	if w.Header().Get("Content-Type") != "application/json" {
+	if r.Header.Get("Content-Type") != "application/json" {
 		w.WriteHeader(http.StatusUnsupportedMediaType)
 
 		json.NewEncoder(w).Encode(errs.ErrInvalidBodyType())
@@ -60,7 +60,7 @@ func (h handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
-	if w.Header().Get("Content-Type") != "application/json" {
+	if r.Header.Get("Content-Type") != "application/json" {
 		w.WriteHeader(http.StatusBadRequest)
 
 		json.NewEncoder(w).Encode(errs.ErrInvalidBodyType())

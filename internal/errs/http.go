@@ -13,17 +13,3 @@ func ErrInvalidBodyReq() error {
 func ErrInvalidBodyType() error {
 	return Error{Code: http.StatusUnsupportedMediaType, Msg: "want json"}
 }
-
-// Error of adding question in poll
-func ErrCantAddQuestion() error {
-	return Error{Code: http.StatusInternalServerError, Msg: "can't add question in db"}
-}
-
-// Error of adding answer in poll
-func ErrCantAddAnswer() error {
-	return Error{Code: http.StatusInternalServerError, Msg: "can't add answer in db"}
-}
-
-func ErrCantDeleteAnswer() error {
-	return Error{Code: http.StatusInternalServerError, Msg: "can't delete answer in db"}
-}
