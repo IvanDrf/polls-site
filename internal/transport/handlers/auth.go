@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/IvanDrf/polls-site/internal/errs"
@@ -24,6 +25,8 @@ func (h handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnsupportedMediaType)
 
 		json.NewEncoder(w).Encode(errs.ErrInvalidBodyType())
+
+		h.logger.Info("req -> Register -> bad content-type")
 		return
 	}
 
@@ -32,6 +35,8 @@ func (h handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 
 		json.NewEncoder(w).Encode(errs.ErrInvalidBodyReq())
+
+		h.logger.Info("req -> Register -> bad json")
 		return
 	}
 
@@ -44,10 +49,12 @@ func (h handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 
 		json.NewEncoder(w).Encode(err)
+
+		h.logger.Info(fmt.Sprintf("req -> Register -> %s", err))
 		return
 	}
 
-	h.logger.Debug("end user registration")
+	h.logger.Info("req -> Register -> success")
 
 	h.cookier.SetAuthCookies(w, token.Access, token.Refresh)
 
@@ -64,6 +71,8 @@ func (h handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 
 		json.NewEncoder(w).Encode(errs.ErrInvalidBodyType())
+
+		h.logger.Info("req -> Login -> bad content-type")
 		return
 	}
 
@@ -72,6 +81,8 @@ func (h handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 
 		json.NewEncoder(w).Encode(errs.ErrInvalidBodyReq())
+
+		h.logger.Info("req -> Login -> bad json")
 		return
 	}
 
@@ -83,8 +94,12 @@ func (h handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 
 		json.NewEncoder(w).Encode(err)
+
+		h.logger.Info(fmt.Sprintf("req -> Login -> %s", err))
 		return
 	}
+
+	h.logger.Info("req -> Login -> sucess")
 
 	h.cookier.SetAuthCookies(w, token.Access, token.Refresh)
 
@@ -105,8 +120,12 @@ func (h handler) RefreshTokens(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 
 		json.NewEncoder(w).Encode(err)
+
+		h.logger.Info(fmt.Sprintf("req -> Refresh -> %s", err))
 		return
 	}
+
+	h.logger.Info("req -> Refresh -> success")
 
 	h.cookier.SetAuthCookies(w, token.Access, token.Refresh)
 

@@ -11,7 +11,7 @@ import (
 const votesTable = "votes"
 
 type VotesRepo interface {
-	AddVote(vote *models.Vote) (int, error)
+	AddVote(vote *models.Vote) error
 	FindVote(questionId, userId int) (int, error)
 	CountVotes(questionId int) (models.PollRes, error)
 }
@@ -28,16 +28,11 @@ func NewVotesRepo(cfg *config.Config, db *sql.DB) VotesRepo {
 	}
 }
 
-func (r votesRepo) AddVote(vote *models.Vote) (int, error) {
+func (r votesRepo) AddVote(vote *models.Vote) error {
 	query := fmt.Sprintf("INSERT INTO %s.%s (question_id, answ_id, user_id) VALUES (?, ?, ?)", r.dbName, votesTable)
-	res, err := r.db.Exec(query, vote.QuestionId, vote.AnswerId, vote.UserId)
-	if err != nil {
-		return -1, err
-	}
+	_, err := r.db.Exec(query, vote.QuestionId, vote.AnswerId, vote.UserId)
 
-	id, err := res.LastInsertId()
-
-	return int(id), err
+	return err
 }
 
 func (r votesRepo) FindVote(questionId, userId int) (int, error) {

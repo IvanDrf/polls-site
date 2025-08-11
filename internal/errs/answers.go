@@ -16,3 +16,8 @@ func ErrCantDeleteAnswer() error {
 func ErrCantFindAnswers() error {
 	return Error{Code: http.StatusInternalServerError, Msg: "can't find answers in db"}
 }
+
+// Error of finding answer id in database, bad id for vote
+func ErrBadAnswerId() error {
+	return Error{Code: http.StatusBadRequest, Msg: "bad answer id"}
+}

@@ -4,10 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
-	"sync"
 
 	"github.com/IvanDrf/polls-site/config"
-	"github.com/IvanDrf/polls-site/internal/errs"
 	"github.com/IvanDrf/polls-site/internal/models"
 )
 
@@ -18,9 +16,8 @@ type AnswersRepo interface {
 	AddAnswers(answ []string, questionId int) error
 
 	DeleteAnswer(answ *models.Answer) error
-	DeleteAnswers(answ []string, questionId int) error
 
-	FindAnswer(answ string, questionId int) (models.Answer, error)
+	FindAnswerById(answId int, questionId int) (models.Answer, error)
 	//size - amount of answers
 	FindAnswersId(questionId int, size int) ([]int, error)
 }
@@ -71,13 +68,6 @@ func (r answersRepo) AddAnswers(answ []string, questionId int) error {
 	return err
 }
 
-func (r answersRepo) deleteAnswer(questionId int) error {
-	query := fmt.Sprintf("DELETE FROM %s.%s WHERE question_id = ?", r.dbName, answersTable)
-	_, err := r.db.Exec(query, questionId)
-
-	return err
-}
-
 func (r answersRepo) DeleteAnswer(answ *models.Answer) error {
 	query := fmt.Sprintf("DELETE FROM %s.%s WHERE answ = ? AND question_id = ?", r.dbName, answersTable)
 	_, err := r.db.Exec(query, answ.Answer, answ.QuestionId)
@@ -85,42 +75,13 @@ func (r answersRepo) DeleteAnswer(answ *models.Answer) error {
 	return err
 }
 
-func (r answersRepo) DeleteAnswers(answ []string, questionId int) error {
-	fail := false
+func (r answersRepo) FindAnswerById(answId int, questionId int) (models.Answer, error) {
+	query := fmt.Sprintf("SELECT * FROM %s.%s WHERE id = ? AND question_id = ?", r.dbName, answersTable)
+	res := r.db.QueryRow(query, answId, questionId)
 
-	wg := new(sync.WaitGroup)
-	for i := range answ {
-		wg.Add(1)
-		go func(i int, fail *bool) {
-			defer wg.Done()
-			err := r.deleteAnswer(questionId)
-
-			if err != nil {
-				*fail = true
-			}
-		}(i, &fail)
-	}
-
-	wg.Wait()
-
-	if fail {
-		return errs.ErrCantDeleteAnswer()
-	}
-
-	return nil
-}
-
-func (r answersRepo) FindAnswer(answ string, questionId int) (models.Answer, error) {
-	query := fmt.Sprintf("SELECT * FROM %s.%s WHERE answ = ? AND question_id = ?", r.dbName, answersTable)
-	res, err := r.db.Query(query, answ, questionId)
-	if err != nil {
-		return models.Answer{}, err
-	}
-
-	a := models.Answer{}
-	err = res.Scan(&a.Id, &a.Answer, &a.QuestionId)
-
-	return a, err
+	answ := models.Answer{}
+	err := res.Scan(&answ.Id, &answ.Answer, &answ.QuestionId)
+	return answ, err
 }
 
 func (r answersRepo) FindAnswersId(questionId int, size int) ([]int, error) {

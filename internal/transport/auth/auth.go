@@ -13,7 +13,7 @@ import (
 
 	"github.com/IvanDrf/polls-site/internal/repo/auth/tokens"
 	"github.com/IvanDrf/polls-site/internal/transport/auth/checker"
-	jwter "github.com/IvanDrf/polls-site/internal/transport/auth/jwt"
+	"github.com/IvanDrf/polls-site/internal/transport/auth/jwt"
 )
 
 type Auther interface {
