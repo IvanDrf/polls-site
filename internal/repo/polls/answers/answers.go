@@ -3,7 +3,6 @@ package answers
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"strings"
 	"sync"
 
@@ -128,8 +127,6 @@ func (r answersRepo) FindAnswersId(questionId int, size int) ([]int, error) {
 	query := fmt.Sprintf("SELECT id FROM %s.%s WHERE question_id = ?", r.dbName, answersTable)
 	rows, err := r.db.Query(query, questionId)
 	if err != nil {
-		log.Println(query)
-		log.Println(err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -139,7 +136,6 @@ func (r answersRepo) FindAnswersId(questionId int, size int) ([]int, error) {
 		id := 0
 		err = rows.Scan(&id)
 		if err != nil {
-			log.Println(err)
 			return nil, err
 		}
 
