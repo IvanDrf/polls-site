@@ -11,3 +11,8 @@ func ErrCantAddAnswer() error {
 func ErrCantDeleteAnswer() error {
 	return Error{Code: http.StatusInternalServerError, Msg: "can't delete answer in db"}
 }
+
+// Error of finding answers in database
+func ErrCantFindAnswers() error {
+	return Error{Code: http.StatusInternalServerError, Msg: "can't find answers in db"}
+}

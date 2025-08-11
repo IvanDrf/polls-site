@@ -3,6 +3,8 @@ package answers
 import (
 	"database/sql"
 	"fmt"
+	"log"
+	"strings"
 	"sync"
 
 	"github.com/IvanDrf/polls-site/config"
@@ -14,12 +16,14 @@ const answersTable = "answers"
 
 type AnswersRepo interface {
 	AddAnswer(answ *models.Answer) (int, error)
-	AddAnswers(answ []string, questionId int) ([]int, error)
+	AddAnswers(answ []string, questionId int) error
 
 	DeleteAnswer(answ *models.Answer) error
 	DeleteAnswers(answ []string, questionId int) error
 
 	FindAnswer(answ string, questionId int) (models.Answer, error)
+	//size - amount of answers
+	FindAnswersId(questionId int, size int) ([]int, error)
 }
 
 type answersRepo struct {
@@ -46,39 +50,26 @@ func (r answersRepo) AddAnswer(answ *models.Answer) (int, error) {
 	return int(id), err
 }
 
-func (r answersRepo) AddAnswers(answ []string, questionId int) ([]int, error) {
-	answId := make([]int, 0, len(answ))
+func (r answersRepo) AddAnswers(answ []string, questionId int) error {
+	query := fmt.Sprintf("INSERT INTO %s.%s (answ, question_id) VALUES", r.dbName, answersTable)
 
-	fail := false
-	wg := new(sync.WaitGroup)
-	mu := new(sync.Mutex)
+	values := make([]string, 0, len(answ))
+	args := make([]any, 2*len(answ))
+	k := 0
 
 	for i := range answ {
-		wg.Add(1)
-		go func(i int, fail *bool) {
-			defer wg.Done()
-			id, err := r.AddAnswer(&models.Answer{
-				QuestionId: questionId,
-				Answer:     answ[i],
-			})
+		args[k] = answ[i]
+		args[k+1] = questionId
+		k += 2
 
-			mu.Lock()
-			answId = append(answId, id)
-			mu.Unlock()
-			if err != nil {
-				*fail = true
-			}
-
-		}(i, &fail)
+		values = append(values, "(?, ?)")
 	}
 
-	wg.Wait()
+	query += strings.Join(values, ", ")
 
-	if fail {
-		return nil, errs.ErrCantAddAnswer()
-	}
+	_, err := r.db.Exec(query, args...)
 
-	return answId, nil
+	return err
 }
 
 func (r answersRepo) deleteAnswer(questionId int) error {
@@ -131,4 +122,30 @@ func (r answersRepo) FindAnswer(answ string, questionId int) (models.Answer, err
 	err = res.Scan(&a.Id, &a.Answer, &a.QuestionId)
 
 	return a, err
+}
+
+func (r answersRepo) FindAnswersId(questionId int, size int) ([]int, error) {
+	query := fmt.Sprintf("SELECT id FROM %s.%s WHERE question_id = ?", r.dbName, answersTable)
+	rows, err := r.db.Query(query, questionId)
+	if err != nil {
+		log.Println(query)
+		log.Println(err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	answId := make([]int, 0, size)
+	for rows.Next() {
+		id := 0
+		err = rows.Scan(&id)
+		if err != nil {
+			log.Println(err)
+			return nil, err
+		}
+
+		answId = append(answId, id)
+	}
+
+	return answId, nil
+
 }

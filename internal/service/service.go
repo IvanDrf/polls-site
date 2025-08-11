@@ -11,6 +11,7 @@ import (
 	"github.com/IvanDrf/polls-site/internal/repo/polls/answers"
 	"github.com/IvanDrf/polls-site/internal/repo/polls/questions"
 	"github.com/IvanDrf/polls-site/internal/repo/polls/votes"
+	"github.com/IvanDrf/polls-site/internal/repo/transaction"
 	jwter "github.com/IvanDrf/polls-site/internal/transport/auth/jwt"
 )
 
@@ -27,6 +28,8 @@ type pollService struct {
 	votesRepo  votes.VotesRepo
 	tokensRepo tokens.TokensRepo
 
+	transaction transaction.Transactioner
+
 	jwter jwter.Jwter
 }
 
@@ -37,11 +40,12 @@ func NewPollService(cfg *config.Config, db *sql.DB) PollService {
 		votesRepo:  votes.NewVotesRepo(cfg, db),
 		tokensRepo: tokens.NewTokensRepo(cfg, db),
 
+		transaction: transaction.NewTransactioner(cfg, db),
+
 		jwter: jwter.NewJwter(cfg),
 	}
 }
 
-// TODO: add user id in question -> see man, who created poll
 func (p pollService) AddPoll(poll *models.Poll, r *http.Request) (models.PollId, error) {
 	token, err := p.jwter.GetToken(r, jwter.RefreshToken)
 	if err != nil {
@@ -53,18 +57,26 @@ func (p pollService) AddPoll(poll *models.Poll, r *http.Request) (models.PollId,
 		return models.PollId{}, errs.ErrCantFindUserId()
 	}
 
+	p.transaction.StartTransaction()
 	questionId, err := p.questRepo.AddQuestionPoll(poll)
 	if err != nil {
+		p.transaction.RollBackTransaction()
 		return models.PollId{}, errs.ErrCantAddQuestion()
 	}
 
-	answId, err := p.answRepo.AddAnswers(poll.Answers, questionId)
+	err = p.answRepo.AddAnswers(poll.Answers, questionId)
 	if err != nil {
-		p.answRepo.DeleteAnswers(poll.Answers, questionId)
-		p.questRepo.DeleteQuestionPollById(questionId)
-
+		p.transaction.RollBackTransaction()
 		return models.PollId{}, err
 	}
+
+	answId, err := p.answRepo.FindAnswersId(questionId, len(poll.Answers))
+	if err != nil {
+		p.transaction.RollBackTransaction()
+		return models.PollId{}, errs.ErrCantFindAnswers()
+	}
+
+	p.transaction.CommitTransaction()
 
 	return models.PollId{Id: questionId, AnswersId: answId}, nil
 }
@@ -75,15 +87,21 @@ func (p pollService) DeletePoll(poll *models.Poll) error {
 		return errs.ErrCantFindQuestion()
 	}
 
+	p.transaction.StartTransaction()
+
 	err = p.answRepo.DeleteAnswers(poll.Answers, question.Id)
 	if err != nil {
+		p.transaction.RollBackTransaction()
 		return errs.ErrCantAddAnswer()
 	}
 
 	err = p.questRepo.DeleteQuestionPollById(question.Id)
 	if err != nil {
+		p.transaction.RollBackTransaction()
 		return errs.ErrCantDeleteQuestion()
 	}
+
+	p.transaction.CommitTransaction()
 
 	return nil
 }
