@@ -37,6 +37,13 @@ func (r votesRepo) AddVote(vote *models.Vote) error {
 	return err
 }
 
+func (r votesRepo) DeleteVote(questionId int, userId int) error {
+	query := fmt.Sprintf("DELETE FROM %s.%s WHERE question_id = ? AND user_id = ?", r.dbName, votesTable)
+	_, err := r.db.Exec(query, questionId, userId)
+
+	return err
+}
+
 func (r votesRepo) FindVote(questionId, userId int) (int, error) {
 	query := fmt.Sprintf("SELECT id FROM %s.%s WHERE question_id = ? AND user_id = ?", r.dbName, votesTable)
 	rows := r.db.QueryRow(query, questionId, userId)
