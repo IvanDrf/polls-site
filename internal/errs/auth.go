@@ -36,3 +36,7 @@ func ErrCantFindUserId() error {
 func ErrInvalidPswInLog() error {
 	return Error{Code: http.StatusUnauthorized, Msg: "incorrect password"}
 }
+
+func ErrNotAdmin() error {
+	return Error{Code: http.StatusForbidden, Msg: "this user is not admin for this poll"}
+}

@@ -46,10 +46,10 @@ type PollRes struct {
 }
 
 type Poll struct {
-	Id       int      `json:"id"`
-	Question string   `json:"question"`
-	UserId   int      `json:"-"`
-	Answers  []string `json:"answers"`
+	QuestionId int      `json:"question_id"`
+	Question   string   `json:"question"`
+	UserId     int      `json:"-"`
+	Answers    []string `json:"answers"`
 }
 
 type PollId struct {

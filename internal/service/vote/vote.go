@@ -18,6 +18,7 @@ import (
 
 type VoteService interface {
 	VoteInPoll(vote *models.Vote, r *http.Request) (models.PollRes, error)
+	DeleteAllVotes(poll *models.Poll, r *http.Request) error
 }
 
 type voteService struct {
@@ -47,7 +48,6 @@ func NewVoteService(cfg *config.Config, db *sql.DB, logger *slog.Logger) VoteSer
 	}
 }
 
-// TODO: add check for question and answers id in databases
 func (v voteService) VoteInPoll(vote *models.Vote, r *http.Request) (models.PollRes, error) {
 	token, err := v.jwter.GetToken(r, jwter.RefreshToken)
 	if err != nil {
@@ -59,7 +59,7 @@ func (v voteService) VoteInPoll(vote *models.Vote, r *http.Request) (models.Poll
 		return models.PollRes{}, errs.ErrCantFindUserId()
 	}
 
-	question, err := v.questRepo.FindQuestionPollById(vote.QuestionId)
+	question, err := v.questRepo.FindQuestionById(vote.QuestionId)
 	if err != nil || question.Id != vote.QuestionId {
 		return models.PollRes{}, errs.ErrCantFindQuestion()
 	}
@@ -91,4 +91,37 @@ func (v voteService) VoteInPoll(vote *models.Vote, r *http.Request) (models.Poll
 	v.transaction.CommitTransaction()
 
 	return res, nil
+}
+
+func (v voteService) DeleteAllVotes(poll *models.Poll, r *http.Request) error {
+	token, err := v.jwter.GetToken(r, jwter.RefreshToken)
+	if err != nil {
+		return err
+	}
+
+	poll.UserId, err = v.tokensRepo.FindUserId(token)
+	if err != nil {
+		return errs.ErrCantFindUserId()
+	}
+
+	question, err := v.questRepo.FindQuestionById(poll.QuestionId)
+	if err != nil {
+		return errs.ErrCantFindQuestion()
+	}
+
+	if poll.UserId != question.UserId {
+		return errs.ErrNotAdmin()
+	}
+
+	v.transaction.StartTransaction()
+
+	err = v.votesRepo.DeleteAllVotes(poll.QuestionId)
+	if err != nil {
+		v.transaction.RollBackTransaction()
+		return errs.ErrCantDeleteAllVotes()
+	}
+
+	// Don't commit transaction cuz deleting another tables
+
+	return nil
 }

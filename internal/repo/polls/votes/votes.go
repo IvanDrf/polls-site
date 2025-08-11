@@ -14,6 +14,8 @@ type VotesRepo interface {
 	AddVote(vote *models.Vote) error
 	FindVote(questionId, userId int) (int, error)
 	CountVotes(questionId int) (models.PollRes, error)
+
+	DeleteAllVotes(questionId int) error
 }
 
 type votesRepo struct {
@@ -64,4 +66,11 @@ func (r votesRepo) CountVotes(questionId int) (models.PollRes, error) {
 	}
 
 	return pollRes, nil
+}
+
+func (r votesRepo) DeleteAllVotes(questionId int) error {
+	query := fmt.Sprintf("DELETE FROM %s.%s WHERE question_id = ?", r.dbName, votesTable)
+	_, err := r.db.Exec(query, questionId)
+
+	return err
 }

@@ -16,6 +16,7 @@ type AnswersRepo interface {
 	AddAnswers(answ []string, questionId int) error
 
 	DeleteAnswer(answ *models.Answer) error
+	DeleteAllAnswers(questionId int) error
 
 	FindAnswerById(answId int, questionId int) (models.Answer, error)
 	//size - amount of answers
@@ -71,6 +72,13 @@ func (r answersRepo) AddAnswers(answ []string, questionId int) error {
 func (r answersRepo) DeleteAnswer(answ *models.Answer) error {
 	query := fmt.Sprintf("DELETE FROM %s.%s WHERE answ = ? AND question_id = ?", r.dbName, answersTable)
 	_, err := r.db.Exec(query, answ.Answer, answ.QuestionId)
+
+	return err
+}
+
+func (r answersRepo) DeleteAllAnswers(questionId int) error {
+	query := fmt.Sprintf("DELETE FROM %s.%s WHERE question_id = ?", r.dbName, answersTable)
+	_, err := r.db.Exec(query, questionId)
 
 	return err
 }

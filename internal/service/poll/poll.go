@@ -17,6 +17,7 @@ import (
 
 type PollService interface {
 	AddPoll(poll *models.Poll, r *http.Request) (models.PollId, error)
+	DeletePoll(poll *models.Poll, r *http.Request) error
 }
 
 type pollService struct {
@@ -58,7 +59,7 @@ func (p pollService) AddPoll(poll *models.Poll, r *http.Request) (models.PollId,
 	}
 
 	p.transaction.StartTransaction()
-	questionId, err := p.questRepo.AddQuestionPoll(poll)
+	questionId, err := p.questRepo.AddQuestion(poll)
 	if err != nil {
 		p.transaction.RollBackTransaction()
 		return models.PollId{}, errs.ErrCantAddQuestion()
@@ -79,4 +80,43 @@ func (p pollService) AddPoll(poll *models.Poll, r *http.Request) (models.PollId,
 	p.transaction.CommitTransaction()
 
 	return models.PollId{Id: questionId, AnswersId: answId}, nil
+}
+
+func (p pollService) DeletePoll(poll *models.Poll, r *http.Request) error {
+	token, err := p.jwter.GetToken(r, jwter.RefreshToken)
+	if err != nil {
+		return err
+	}
+
+	poll.UserId, err = p.tokensRepo.FindUserId(token)
+	if err != nil {
+		return errs.ErrCantFindUserId()
+	}
+
+	question, err := p.questRepo.FindQuestionById(poll.QuestionId)
+	if err != nil {
+		return errs.ErrCantFindQuestion()
+	}
+
+	if poll.UserId != question.UserId {
+		return errs.ErrNotAdmin()
+	}
+
+	// Do not open transaction cuz it's already open in DeleteAllVotes
+
+	err = p.answRepo.DeleteAllAnswers(poll.QuestionId)
+	if err != nil {
+		p.transaction.RollBackTransaction()
+		return errs.ErrCantDeleteAnswer()
+	}
+
+	err = p.questRepo.DeleteQuestionById(poll.QuestionId)
+	if err != nil {
+		p.transaction.RollBackTransaction()
+		return errs.ErrCantDeleteQuestion()
+	}
+
+	p.transaction.CommitTransaction()
+
+	return nil
 }

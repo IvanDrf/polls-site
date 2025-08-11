@@ -13,3 +13,7 @@ func ErrAlreadyVoted() error {
 func ErrCantCountVotes() error {
 	return Error{Code: http.StatusInternalServerError, Msg: "can't count votes in poll"}
 }
+
+func ErrCantDeleteAllVotes() error {
+	return Error{Code: http.StatusInternalServerError, Msg: "can't delete all votes for question"}
+}

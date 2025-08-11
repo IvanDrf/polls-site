@@ -82,7 +82,17 @@ func (h handler) DeletePoll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.pollService.DeletePoll(&poll); err != nil {
+	if err := h.voteService.DeleteAllVotes(&poll, r); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(errs.GetCode(err))
+
+		json.NewEncoder(w).Encode(err)
+
+		h.logger.Info("req -> DeletePoll -> can't delete votes")
+		return
+	}
+
+	if err := h.pollService.DeletePoll(&poll, r); err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(errs.GetCode(err))
 
