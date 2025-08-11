@@ -11,3 +11,17 @@ func ErrCantAddAnswer() error {
 func ErrCantDeleteAnswer() error {
 	return Error{Code: http.StatusInternalServerError, Msg: "can't delete answer in db"}
 }
+
+func ErrCantDeleteAllAnswers() error {
+	return Error{Code: http.StatusInternalServerError, Msg: "can't delete all answers in db"}
+}
+
+// Error of finding answers in database
+func ErrCantFindAnswers() error {
+	return Error{Code: http.StatusInternalServerError, Msg: "can't find answers in db"}
+}
+
+// Error of finding answer id in database, bad id for vote
+func ErrBadAnswerId() error {
+	return Error{Code: http.StatusBadRequest, Msg: "bad answer id"}
+}

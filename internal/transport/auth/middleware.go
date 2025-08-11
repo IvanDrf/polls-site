@@ -40,7 +40,7 @@ func (middle middleware) AuthMiddleware(next http.HandlerFunc) http.HandlerFunc 
 		}
 
 		if err := middle.jwter.IsValidJWT(accessToken); err == nil {
-			middle.logger.Info("middle -> valid token")
+			middle.logger.Info("middle -> success")
 			next(w, r)
 			return
 		}

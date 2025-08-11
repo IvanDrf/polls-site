@@ -13,10 +13,10 @@ const (
 )
 
 type QuestionRepo interface {
-	AddQuestionPoll(poll *models.Poll) (int, error)
-	DeleteQuestionPollById(id int) error
+	AddQuestion(poll *models.Poll) (int, error)
+	DeleteQuestionById(id int) error
 
-	FindQuestionPollById(id int) (models.Question, error)
+	FindQuestionById(id int) (models.Question, error)
 }
 
 type questionRepo struct {
@@ -31,7 +31,7 @@ func NewQuestionRepo(cfg *config.Config, db *sql.DB) QuestionRepo {
 	}
 }
 
-func (r questionRepo) AddQuestionPoll(poll *models.Poll) (int, error) {
+func (r questionRepo) AddQuestion(poll *models.Poll) (int, error) {
 	query := fmt.Sprintf("INSERT INTO %s.%s (question, user_id) VALUES (?, ?)", r.dbName, questionTable)
 	res, err := r.db.Exec(query, poll.Question, poll.UserId)
 	if err != nil {
@@ -43,14 +43,14 @@ func (r questionRepo) AddQuestionPoll(poll *models.Poll) (int, error) {
 	return int(id), err
 }
 
-func (r questionRepo) DeleteQuestionPollById(id int) error {
+func (r questionRepo) DeleteQuestionById(id int) error {
 	query := fmt.Sprintf("DELETE FROM %s.%s WHERE id = ?", r.dbName, questionTable)
 	_, err := r.db.Exec(query, id)
 
 	return err
 }
 
-func (r questionRepo) FindQuestionPollById(id int) (models.Question, error) {
+func (r questionRepo) FindQuestionById(id int) (models.Question, error) {
 	query := fmt.Sprintf("SELECT * FROM %s.%s WHERE id = ?", r.dbName, questionTable)
 	res := r.db.QueryRow(query, id)
 

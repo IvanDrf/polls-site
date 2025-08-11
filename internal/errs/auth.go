@@ -7,11 +7,6 @@ func ErrAlreadyInDB() error {
 	return Error{Code: http.StatusUnauthorized, Msg: "user with this email already exists"}
 }
 
-// Error of finding user's id in database
-func ErrCantFindUserId() error {
-	return Error{Code: http.StatusInternalServerError, Msg: "can't find user id in db"}
-}
-
 // Error of registration, invalid email, doesn't mathc regual expr
 func ErrInvalidEmailInReg() error {
 	return Error{Code: http.StatusUnauthorized, Msg: "incorrect email during registration"}
@@ -32,7 +27,16 @@ func ErrCantFindUser() error {
 	return Error{Code: http.StatusUnauthorized, Msg: "user with this email doesn't exist"}
 }
 
+// Error of finding user's id in database
+func ErrCantFindUserId() error {
+	return Error{Code: http.StatusInternalServerError, Msg: "can't find user id in db"}
+}
+
 // Error of password, incorrect password during logging
 func ErrInvalidPswInLog() error {
 	return Error{Code: http.StatusUnauthorized, Msg: "incorrect password"}
+}
+
+func ErrNotAdmin() error {
+	return Error{Code: http.StatusForbidden, Msg: "this user is not admin for this poll"}
 }
