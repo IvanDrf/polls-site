@@ -8,7 +8,7 @@ import (
 	"github.com/IvanDrf/polls-site/config"
 	"github.com/IvanDrf/polls-site/internal/errs"
 	"github.com/IvanDrf/polls-site/internal/models"
-	"github.com/IvanDrf/polls-site/internal/repo/auth/tokens"
+	"github.com/IvanDrf/polls-site/internal/repo/auth/jwt"
 	"github.com/IvanDrf/polls-site/internal/repo/polls/answers"
 	"github.com/IvanDrf/polls-site/internal/repo/polls/questions"
 	"github.com/IvanDrf/polls-site/internal/repo/transaction"
@@ -23,7 +23,7 @@ type PollService interface {
 type pollService struct {
 	answRepo   answers.AnswersRepo
 	questRepo  questions.QuestionRepo
-	tokensRepo tokens.TokensRepo
+	tokensRepo jwt.JWTRepo
 
 	transaction transaction.Transactioner
 
@@ -37,7 +37,7 @@ func NewPollService(cfg *config.Config, db *sql.DB, logger *slog.Logger) PollSer
 		answRepo:  answers.NewAnswersRepo(cfg, db),
 		questRepo: questions.NewQuestionRepo(cfg, db),
 
-		tokensRepo: tokens.NewTokensRepo(cfg, db),
+		tokensRepo: jwt.NewTokensRepo(cfg, db),
 
 		transaction: transaction.NewTransactioner(cfg, db),
 

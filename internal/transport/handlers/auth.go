@@ -11,6 +11,7 @@ import (
 
 type AuthHandler interface {
 	RegisterUser(w http.ResponseWriter, r *http.Request)
+	VerifyEmail(w http.ResponseWriter, r *http.Request)
 	LoginUser(w http.ResponseWriter, r *http.Request)
 
 	RefreshTokens(w http.ResponseWriter, r *http.Request)
@@ -60,6 +61,10 @@ func (h handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(token)
+}
+
+func (h handler) VerifyEmail(w http.ResponseWriter, r *http.Request) {
+
 }
 
 func (h handler) LoginUser(w http.ResponseWriter, r *http.Request) {

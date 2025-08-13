@@ -40,3 +40,7 @@ func ErrInvalidPswInLog() error {
 func ErrNotAdmin() error {
 	return Error{Code: http.StatusForbidden, Msg: "this user is not admin for this poll"}
 }
+
+func ErrCantResetPassword() error {
+	return Error{Code: http.StatusInternalServerError, Msg: "can't update password for this user"}
+}

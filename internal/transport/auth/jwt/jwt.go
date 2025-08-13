@@ -27,6 +27,7 @@ type Jwter interface {
 
 	ParseToken(tokenSrt string) (*jwt.Token, error)
 
+	// Return access, refresh, error
 	GenerateTokens(user *models.User) (string, string, error)
 	GenerateAccessJWT(user *models.User) (string, error)
 	GenerateRefreshJWT(user *models.User) (string, error)

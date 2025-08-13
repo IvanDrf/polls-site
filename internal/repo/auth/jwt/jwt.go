@@ -1,4 +1,4 @@
-package tokens
+package jwt
 
 import (
 	"database/sql"
@@ -8,9 +8,9 @@ import (
 	"github.com/IvanDrf/polls-site/internal/models"
 )
 
-const tokensTable = "tokens"
+const jwtTable = "jwt"
 
-type TokensRepo interface {
+type JWTRepo interface {
 	AddRefreshToken(userId int, refresh string) error
 	UpdateRefreshToken(userId int, refresh string) error
 
@@ -19,34 +19,34 @@ type TokensRepo interface {
 }
 
 // TODO write find method
-type tokensRepo struct {
+type jwtRepo struct {
 	dbName string
 	db     *sql.DB
 }
 
-func NewTokensRepo(cfg *config.Config, db *sql.DB) TokensRepo {
-	return tokensRepo{
+func NewTokensRepo(cfg *config.Config, db *sql.DB) JWTRepo {
+	return jwtRepo{
 		dbName: cfg.DBName,
 		db:     db,
 	}
 }
 
-func (t tokensRepo) AddRefreshToken(userId int, refresh string) error {
-	query := fmt.Sprintf("INSERT INTO %s.%s (user_id, token) VALUES(?, ?)", t.dbName, tokensTable)
+func (t jwtRepo) AddRefreshToken(userId int, refresh string) error {
+	query := fmt.Sprintf("INSERT INTO %s.%s (user_id, token) VALUES(?, ?)", t.dbName, jwtTable)
 	_, err := t.db.Exec(query, userId, refresh)
 
 	return err
 }
 
-func (t tokensRepo) UpdateRefreshToken(userId int, refresh string) error {
-	query := fmt.Sprintf("UPDATE %s.%s SET token = ? WHERE user_id = ?", t.dbName, tokensTable)
+func (t jwtRepo) UpdateRefreshToken(userId int, refresh string) error {
+	query := fmt.Sprintf("UPDATE %s.%s SET token = ? WHERE user_id = ?", t.dbName, jwtTable)
 	_, err := t.db.Exec(query, refresh, userId)
 
 	return err
 }
 
-func (t tokensRepo) FindRefreshToken(userId int) (models.JWT, error) {
-	query := fmt.Sprintf("SELECT * FROM %s.%s WHERE user_id = ?", t.dbName, tokensTable)
+func (t jwtRepo) FindRefreshToken(userId int) (models.JWT, error) {
+	query := fmt.Sprintf("SELECT * FROM %s.%s WHERE user_id = ?", t.dbName, jwtTable)
 	res := t.db.QueryRow(query, userId)
 
 	token := models.JWT{}
@@ -57,8 +57,8 @@ func (t tokensRepo) FindRefreshToken(userId int) (models.JWT, error) {
 	return token, nil
 }
 
-func (t tokensRepo) FindUserId(refreshToken string) (int, error) {
-	query := fmt.Sprintf("SELECT * FROM %s.%s WHERE token = ?", t.dbName, tokensTable)
+func (t jwtRepo) FindUserId(refreshToken string) (int, error) {
+	query := fmt.Sprintf("SELECT * FROM %s.%s WHERE token = ?", t.dbName, jwtTable)
 	res := t.db.QueryRow(query, refreshToken)
 
 	token := models.JWT{}

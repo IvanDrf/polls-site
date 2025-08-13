@@ -35,9 +35,9 @@ func NewAnswersRepo(cfg *config.Config, db *sql.DB) AnswersRepo {
 	}
 }
 
-func (r answersRepo) AddAnswer(answ *models.Answer) (int, error) {
-	query := fmt.Sprintf("INSERT INTO %s.%s (answ, question_id) VALUES (?, ?)", r.dbName, answersTable)
-	res, err := r.db.Exec(query, answ.Answer, answ.QuestionId)
+func (a answersRepo) AddAnswer(answ *models.Answer) (int, error) {
+	query := fmt.Sprintf("INSERT INTO %s.%s (answ, question_id) VALUES (?, ?)", a.dbName, answersTable)
+	res, err := a.db.Exec(query, answ.Answer, answ.QuestionId)
 	if err != nil {
 		return -1, err
 	}
@@ -47,8 +47,8 @@ func (r answersRepo) AddAnswer(answ *models.Answer) (int, error) {
 	return int(id), err
 }
 
-func (r answersRepo) AddAnswers(answ []string, questionId int) error {
-	query := fmt.Sprintf("INSERT INTO %s.%s (answ, question_id) VALUES", r.dbName, answersTable)
+func (a answersRepo) AddAnswers(answ []string, questionId int) error {
+	query := fmt.Sprintf("INSERT INTO %s.%s (answ, question_id) VALUES", a.dbName, answersTable)
 
 	values := make([]string, 0, len(answ))
 	args := make([]any, 2*len(answ))
@@ -64,37 +64,37 @@ func (r answersRepo) AddAnswers(answ []string, questionId int) error {
 
 	query += strings.Join(values, ", ")
 
-	_, err := r.db.Exec(query, args...)
+	_, err := a.db.Exec(query, args...)
 
 	return err
 }
 
-func (r answersRepo) DeleteAnswer(answ *models.Answer) error {
-	query := fmt.Sprintf("DELETE FROM %s.%s WHERE answ = ? AND question_id = ?", r.dbName, answersTable)
-	_, err := r.db.Exec(query, answ.Answer, answ.QuestionId)
+func (a answersRepo) DeleteAnswer(answ *models.Answer) error {
+	query := fmt.Sprintf("DELETE FROM %s.%s WHERE answ = ? AND question_id = ?", a.dbName, answersTable)
+	_, err := a.db.Exec(query, answ.Answer, answ.QuestionId)
 
 	return err
 }
 
-func (r answersRepo) DeleteAllAnswers(questionId int) error {
-	query := fmt.Sprintf("DELETE FROM %s.%s WHERE question_id = ?", r.dbName, answersTable)
-	_, err := r.db.Exec(query, questionId)
+func (a answersRepo) DeleteAllAnswers(questionId int) error {
+	query := fmt.Sprintf("DELETE FROM %s.%s WHERE question_id = ?", a.dbName, answersTable)
+	_, err := a.db.Exec(query, questionId)
 
 	return err
 }
 
-func (r answersRepo) FindAnswerById(answId int, questionId int) (models.Answer, error) {
-	query := fmt.Sprintf("SELECT * FROM %s.%s WHERE id = ? AND question_id = ?", r.dbName, answersTable)
-	res := r.db.QueryRow(query, answId, questionId)
+func (a answersRepo) FindAnswerById(answId int, questionId int) (models.Answer, error) {
+	query := fmt.Sprintf("SELECT * FROM %s.%s WHERE id = ? AND question_id = ?", a.dbName, answersTable)
+	res := a.db.QueryRow(query, answId, questionId)
 
 	answ := models.Answer{}
 	err := res.Scan(&answ.Id, &answ.Answer, &answ.QuestionId)
 	return answ, err
 }
 
-func (r answersRepo) FindAnswersId(questionId int, size int) ([]int, error) {
-	query := fmt.Sprintf("SELECT id FROM %s.%s WHERE question_id = ?", r.dbName, answersTable)
-	rows, err := r.db.Query(query, questionId)
+func (a answersRepo) FindAnswersId(questionId int, size int) ([]int, error) {
+	query := fmt.Sprintf("SELECT id FROM %s.%s WHERE question_id = ?", a.dbName, answersTable)
+	rows, err := a.db.Query(query, questionId)
 	if err != nil {
 		return nil, err
 	}

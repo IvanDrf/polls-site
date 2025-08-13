@@ -8,7 +8,7 @@ import (
 	"github.com/IvanDrf/polls-site/config"
 	"github.com/IvanDrf/polls-site/internal/errs"
 	"github.com/IvanDrf/polls-site/internal/models"
-	"github.com/IvanDrf/polls-site/internal/repo/auth/tokens"
+	"github.com/IvanDrf/polls-site/internal/repo/auth/jwt"
 	"github.com/IvanDrf/polls-site/internal/repo/polls/answers"
 	"github.com/IvanDrf/polls-site/internal/repo/polls/questions"
 	"github.com/IvanDrf/polls-site/internal/repo/polls/votes"
@@ -27,7 +27,7 @@ type voteService struct {
 	answRepo   answers.AnswersRepo
 	questRepo  questions.QuestionRepo
 	votesRepo  votes.VotesRepo
-	tokensRepo tokens.TokensRepo
+	tokensRepo jwt.JWTRepo
 
 	transaction transaction.Transactioner
 
@@ -42,7 +42,7 @@ func NewVoteService(cfg *config.Config, db *sql.DB, logger *slog.Logger) VoteSer
 		questRepo: questions.NewQuestionRepo(cfg, db),
 		votesRepo: votes.NewVotesRepo(cfg, db),
 
-		tokensRepo:  tokens.NewTokensRepo(cfg, db),
+		tokensRepo:  jwt.NewTokensRepo(cfg, db),
 		transaction: transaction.NewTransactioner(cfg, db),
 
 		jwter:  jwter.NewJwter(cfg),

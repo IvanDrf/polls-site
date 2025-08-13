@@ -31,16 +31,16 @@ func NewVotesRepo(cfg *config.Config, db *sql.DB) VotesRepo {
 	}
 }
 
-func (r votesRepo) AddVote(vote *models.Vote) error {
-	query := fmt.Sprintf("INSERT INTO %s.%s (question_id, answ_id, user_id) VALUES (?, ?, ?)", r.dbName, votesTable)
-	_, err := r.db.Exec(query, vote.QuestionId, vote.AnswerId, vote.UserId)
+func (v votesRepo) AddVote(vote *models.Vote) error {
+	query := fmt.Sprintf("INSERT INTO %s.%s (question_id, answ_id, user_id) VALUES (?, ?, ?)", v.dbName, votesTable)
+	_, err := v.db.Exec(query, vote.QuestionId, vote.AnswerId, vote.UserId)
 
 	return err
 }
 
-func (r votesRepo) FindVote(questionId, userId int) (int, error) {
-	query := fmt.Sprintf("SELECT id FROM %s.%s WHERE question_id = ? AND user_id = ?", r.dbName, votesTable)
-	rows := r.db.QueryRow(query, questionId, userId)
+func (v votesRepo) FindVote(questionId, userId int) (int, error) {
+	query := fmt.Sprintf("SELECT id FROM %s.%s WHERE question_id = ? AND user_id = ?", v.dbName, votesTable)
+	rows := v.db.QueryRow(query, questionId, userId)
 
 	id := 0
 	err := rows.Scan(&id)
@@ -48,9 +48,9 @@ func (r votesRepo) FindVote(questionId, userId int) (int, error) {
 	return id, err
 }
 
-func (r votesRepo) CountVotes(questionId int) (models.PollRes, error) {
-	query := fmt.Sprintf("SELECT answ_id, user_id FROM %s.%s WHERE question_id = ?", r.dbName, votesTable)
-	rows, err := r.db.Query(query, questionId)
+func (v votesRepo) CountVotes(questionId int) (models.PollRes, error) {
+	query := fmt.Sprintf("SELECT answ_id, user_id FROM %s.%s WHERE question_id = ?", v.dbName, votesTable)
+	rows, err := v.db.Query(query, questionId)
 	if err != nil {
 		return models.PollRes{}, err
 	}
@@ -69,16 +69,16 @@ func (r votesRepo) CountVotes(questionId int) (models.PollRes, error) {
 	return pollRes, nil
 }
 
-func (r votesRepo) DeleteVote(questionId int, userId int) error {
-	query := fmt.Sprintf("DELETE FROM %s.%s WHERE question_id = ? AND user_id = ?", r.dbName, votesTable)
-	_, err := r.db.Exec(query, questionId, userId)
+func (v votesRepo) DeleteVote(questionId int, userId int) error {
+	query := fmt.Sprintf("DELETE FROM %s.%s WHERE question_id = ? AND user_id = ?", v.dbName, votesTable)
+	_, err := v.db.Exec(query, questionId, userId)
 
 	return err
 }
 
-func (r votesRepo) DeleteAllVotes(questionId int) error {
-	query := fmt.Sprintf("DELETE FROM %s.%s WHERE question_id = ?", r.dbName, votesTable)
-	_, err := r.db.Exec(query, questionId)
+func (v votesRepo) DeleteAllVotes(questionId int) error {
+	query := fmt.Sprintf("DELETE FROM %s.%s WHERE question_id = ?", v.dbName, votesTable)
+	_, err := v.db.Exec(query, questionId)
 
 	return err
 }

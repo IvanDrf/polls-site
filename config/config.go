@@ -19,6 +19,12 @@ type Config struct {
 	DBUser     string
 	DBPassword string
 
+	Email    string
+	Password string
+
+	SmtpHost string
+	SmtpPort string
+
 	Logger string
 	JWT    []byte
 }
@@ -39,6 +45,11 @@ func InitCFG() *Config {
 
 		DBUser:     os.Getenv("DB_USER"),
 		DBPassword: os.Getenv("DB_PASSWORD"),
+
+		Email:    os.Getenv("EMAIL"),
+		Password: os.Getenv("EMAIL_PASSWORD"),
+		SmtpHost: os.Getenv("SMTP_HOST"),
+		SmtpPort: os.Getenv("SMTP_PORT"),
 
 		Logger: os.Getenv("LOGGER_LEVEL"),
 		JWT:    []byte(os.Getenv("JWT_SECRET")),

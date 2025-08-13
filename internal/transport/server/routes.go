@@ -2,6 +2,7 @@ package server
 
 func (s *Server) RegisterRoutes() {
 	s.server.HandleFunc("POST /register", s.handler.RegisterUser) // auth
+	s.server.HandleFunc("/verify-email", s.handler.VerifyEmail)   // auth
 	s.server.HandleFunc("POST /login", s.handler.LoginUser)       //auth
 	s.server.HandleFunc("POST /refresh", s.handler.RefreshTokens) // auth
 

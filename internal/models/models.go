@@ -56,3 +56,8 @@ type PollId struct {
 	Id        int   `json:"question_id"`
 	AnswersId []int `json:"answers_id"`
 }
+
+type EmailSending struct {
+	Email string
+	Link  string
+}
