@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/IvanDrf/polls-site/internal/errs"
@@ -47,7 +46,7 @@ func (h handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 
 		json.NewEncoder(w).Encode(err)
 
-		h.logger.Info("req -> Register -> %s", err)
+		h.logger.Info("req -> Register -> ", "error", err)
 		return
 	}
 
@@ -74,7 +73,7 @@ func (h handler) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 
 		json.NewEncoder(w).Encode(err)
 
-		h.logger.Info("req -> Verify email -> %s", err)
+		h.logger.Info("req -> Verify email -> ", "error", err)
 		return
 	}
 
@@ -119,7 +118,7 @@ func (h handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 
 		json.NewEncoder(w).Encode(err)
 
-		h.logger.Info(fmt.Sprintf("req -> Login -> %s", err))
+		h.logger.Info("req -> Login -> ", "error", err)
 		return
 	}
 
@@ -145,7 +144,7 @@ func (h handler) RefreshTokens(w http.ResponseWriter, r *http.Request) {
 
 		json.NewEncoder(w).Encode(err)
 
-		h.logger.Info(fmt.Sprintf("req -> Refresh -> %s", err))
+		h.logger.Info("req -> Refresh -> ", "error", err)
 		return
 	}
 

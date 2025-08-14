@@ -46,7 +46,7 @@ func (h handler) CreatePoll(w http.ResponseWriter, r *http.Request) {
 
 		json.NewEncoder(w).Encode(err)
 
-		h.logger.Info("req -> CreatePoll -> %s", err)
+		h.logger.Info("req -> CreatePoll -> ", "error", err)
 		return
 	}
 
@@ -97,7 +97,7 @@ func (h handler) DeletePoll(w http.ResponseWriter, r *http.Request) {
 
 		json.NewEncoder(w).Encode(err)
 
-		h.logger.Info("req -> DeletePoll -> %s", err)
+		h.logger.Info("req -> DeletePoll -> ", "error", err)
 		return
 	}
 
