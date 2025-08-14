@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/IvanDrf/polls-site/config"
 	"github.com/IvanDrf/polls-site/internal/errs"
@@ -22,12 +23,11 @@ import (
 )
 
 type Auther interface {
-	RegisterUser(user *models.UserReq) (string, string, error)
-	LoginUser(user *models.UserReq) (string, string, error)
+	RegisterUser(user *models.User) (string, string, error)
+	VerifyEmail(link string) error
+	LoginUser(user *models.User) (string, string, error)
 
 	RefreshTokens(r *http.Request) (string, string, error)
-
-	//ResetPassword(req *models.User) (models.JWT, error)
 }
 
 type auth struct {
@@ -68,7 +68,7 @@ func NewAuthService(cfg *config.Config, db *sql.DB, logger *slog.Logger) Auther 
 	}
 }
 
-func (a auth) RegisterUser(user *models.UserReq) (string, string, error) {
+func (a auth) RegisterUser(user *models.User) (string, string, error) {
 	a.logger.Info("auth -> Register")
 
 	if !a.emChecker.ValidEmail(user.Email) {
@@ -95,30 +95,39 @@ func (a auth) RegisterUser(user *models.UserReq) (string, string, error) {
 		return "", "", errs.ErrCantCreateVerifLink()
 	}
 
-	a.emailService.SendEmail(&models.EmailSending{Email: user.Email, Link: link}, email.VerifHeader, email.VerifHeader)
-
-	wg.Wait()
-	a.transaction.StartTransaction()
-	if err := a.userRepo.AddUser(user); err != nil {
-		a.transaction.RollBackTransaction()
-		return "", "", errs.ErrCantRegister()
-	}
-
-	userInDB, err := a.userRepo.FindUserByEmail(user.Email)
+	err := a.emailService.SendEmail(&models.EmailSending{Email: user.Email, Link: link}, email.VerifHeader, email.VerifBody)
 	if err != nil {
-		a.transaction.RollBackTransaction()
-		return "", "", errs.ErrCantRegister()
-	}
-
-	accessToken, refreshToken, err := a.jwter.GenerateTokens(&userInDB)
-	if err != nil {
-		a.transaction.RollBackTransaction()
 		return "", "", err
 	}
 
-	err = a.tokenRepo.AddRefreshToken(userInDB.Id, refreshToken)
+	user.Verificated = false
+	user.VerifLink = link
+	user.Expired = time.Now().Add(24 * time.Hour)
+
+	wg.Wait()
+	a.transaction.StartTransaction()
+
+	user.Id, err = a.userRepo.AddUser(user)
 	if err != nil {
 		a.transaction.RollBackTransaction()
+
+		a.logger.Error(err.Error())
+		return "", "", errs.ErrCantRegister()
+	}
+
+	accessToken, refreshToken, err := a.jwter.GenerateTokens(user)
+	if err != nil {
+		a.transaction.RollBackTransaction()
+
+		a.logger.Error(err.Error())
+		return "", "", err
+	}
+
+	err = a.tokenRepo.AddRefreshToken(user.Id, refreshToken)
+	if err != nil {
+		a.transaction.RollBackTransaction()
+
+		a.logger.Error(err.Error())
 		return "", "", errs.ErrCantAddToken()
 	}
 
@@ -127,7 +136,7 @@ func (a auth) RegisterUser(user *models.UserReq) (string, string, error) {
 	return accessToken, refreshToken, nil
 }
 
-func (a auth) LoginUser(user *models.UserReq) (string, string, error) {
+func (a auth) LoginUser(user *models.User) (string, string, error) {
 	a.logger.Info("auth -> Login")
 
 	userInDB, err := a.userRepo.FindUserByEmail(user.Email)
@@ -155,6 +164,24 @@ func (a auth) LoginUser(user *models.UserReq) (string, string, error) {
 	}
 
 	return accessToken, refreshToken, err
+}
+
+func (a auth) VerifyEmail(link string) error {
+	user, err := a.userRepo.FindUserByLink(link)
+	if err != nil {
+		return errs.ErrCantFindUserByLink()
+	}
+
+	if time.Now().After(user.Expired) {
+		return errs.ErrExpiredLink()
+	}
+
+	err = a.userRepo.ActivateUser(&user)
+	if err != nil {
+		return errs.ErrCantActivateUser()
+	}
+
+	return nil
 }
 
 func (a auth) RefreshTokens(r *http.Request) (string, string, error) {
@@ -193,19 +220,3 @@ func (a auth) RefreshTokens(r *http.Request) (string, string, error) {
 
 	return accessToken, refreshToken, nil
 }
-
-//func (a auth) ResetPassword(user *models.User) (models.JWT, error) {
-//	userInDB, err := a.userRepo.FindUserByEmail(user.Email)
-//	if err != nil {
-//		return models.JWT{}, errs.ErrCantFindUser()
-//	}
-//
-//	user.Id = userInDB.Id
-//
-//	err = a.userRepo.ResetPassword(a.pswHasher.HashPassword(user.Password), user.Id)
-//	if err != nil {
-//		return models.JWT{}, errs.ErrCantResetPassword()
-//	}
-//
-//	//TODO: think about email verify and reset password by email
-//}

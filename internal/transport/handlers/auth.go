@@ -31,7 +31,7 @@ func (h handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := models.UserReq{}
+	req := models.User{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 
@@ -81,7 +81,7 @@ func (h handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := models.UserReq{}
+	user := models.User{}
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 

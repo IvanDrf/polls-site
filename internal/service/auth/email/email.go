@@ -50,7 +50,7 @@ func (e emailService) SendEmail(verif *models.EmailSending, header string, body 
 
 const (
 	VerifHeader = "Verify your email"
-	VerifBody   = "Clicl the following link to vierify your email: "
+	VerifBody   = "Click the following link to vierify your email: "
 )
 
 func (e emailService) CreateEmail(email *models.EmailSending, header string, body string) string {
@@ -64,7 +64,7 @@ func (e emailService) CreateEmail(email *models.EmailSending, header string, bod
 
 	switch body {
 	case VerifBody:
-		body = fmt.Sprintf(VerifBody+"%s", email.Email)
+		body = fmt.Sprintf(VerifBody+"%s", email.Link)
 
 	default:
 		return ""
