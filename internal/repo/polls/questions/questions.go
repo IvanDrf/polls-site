@@ -31,9 +31,9 @@ func NewQuestionRepo(cfg *config.Config, db *sql.DB) QuestionRepo {
 	}
 }
 
-func (r questionRepo) AddQuestion(poll *models.Poll) (int, error) {
-	query := fmt.Sprintf("INSERT INTO %s.%s (question, user_id) VALUES (?, ?)", r.dbName, questionTable)
-	res, err := r.db.Exec(query, poll.Question, poll.UserId)
+func (q questionRepo) AddQuestion(poll *models.Poll) (int, error) {
+	query := fmt.Sprintf("INSERT INTO %s.%s (question, user_id) VALUES (?, ?)", q.dbName, questionTable)
+	res, err := q.db.Exec(query, poll.Question, poll.UserId)
 	if err != nil {
 		return -1, err
 	}
@@ -43,16 +43,16 @@ func (r questionRepo) AddQuestion(poll *models.Poll) (int, error) {
 	return int(id), err
 }
 
-func (r questionRepo) DeleteQuestionById(id int) error {
-	query := fmt.Sprintf("DELETE FROM %s.%s WHERE id = ?", r.dbName, questionTable)
-	_, err := r.db.Exec(query, id)
+func (q questionRepo) DeleteQuestionById(id int) error {
+	query := fmt.Sprintf("DELETE FROM %s.%s WHERE id = ?", q.dbName, questionTable)
+	_, err := q.db.Exec(query, id)
 
 	return err
 }
 
-func (r questionRepo) FindQuestionById(id int) (models.Question, error) {
-	query := fmt.Sprintf("SELECT * FROM %s.%s WHERE id = ?", r.dbName, questionTable)
-	res := r.db.QueryRow(query, id)
+func (q questionRepo) FindQuestionById(id int) (models.Question, error) {
+	query := fmt.Sprintf("SELECT * FROM %s.%s WHERE id = ?", q.dbName, questionTable)
+	res := q.db.QueryRow(query, id)
 
 	ques := models.Question{}
 	err := res.Scan(&ques.Question, &ques.Id, &ques.UserId)

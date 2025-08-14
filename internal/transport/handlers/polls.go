@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/IvanDrf/polls-site/internal/errs"
@@ -47,7 +46,7 @@ func (h handler) CreatePoll(w http.ResponseWriter, r *http.Request) {
 
 		json.NewEncoder(w).Encode(err)
 
-		h.logger.Info(fmt.Sprintf("req -> CreatePoll -> %s", err))
+		h.logger.Info("req -> CreatePoll -> ", "error", err)
 		return
 	}
 
@@ -82,7 +81,7 @@ func (h handler) DeletePoll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.voteService.DeleteAllVotes(&poll, r); err != nil {
+	if err := h.voteService.DeleteAllVotesInPoll(&poll, r); err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(errs.GetCode(err))
 
@@ -98,7 +97,7 @@ func (h handler) DeletePoll(w http.ResponseWriter, r *http.Request) {
 
 		json.NewEncoder(w).Encode(err)
 
-		h.logger.Info(fmt.Sprintf("req -> DeletePoll -> %s", err))
+		h.logger.Info("req -> DeletePoll -> ", "error", err)
 		return
 	}
 

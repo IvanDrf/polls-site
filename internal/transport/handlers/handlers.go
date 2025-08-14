@@ -5,9 +5,9 @@ import (
 	"log/slog"
 
 	"github.com/IvanDrf/polls-site/config"
+	"github.com/IvanDrf/polls-site/internal/service/auth"
 	"github.com/IvanDrf/polls-site/internal/service/poll"
 	"github.com/IvanDrf/polls-site/internal/service/vote"
-	"github.com/IvanDrf/polls-site/internal/transport/auth"
 	"github.com/IvanDrf/polls-site/internal/transport/auth/cookies"
 )
 

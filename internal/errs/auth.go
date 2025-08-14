@@ -27,6 +27,11 @@ func ErrCantFindUser() error {
 	return Error{Code: http.StatusUnauthorized, Msg: "user with this email doesn't exist"}
 }
 
+// Error of email verification
+func ErrCantFindUserByLink() error {
+	return Error{Code: http.StatusUnauthorized, Msg: "can't find user with this link"}
+}
+
 // Error of finding user's id in database
 func ErrCantFindUserId() error {
 	return Error{Code: http.StatusInternalServerError, Msg: "can't find user id in db"}
@@ -39,4 +44,16 @@ func ErrInvalidPswInLog() error {
 
 func ErrNotAdmin() error {
 	return Error{Code: http.StatusForbidden, Msg: "this user is not admin for this poll"}
+}
+
+func ErrCantResetPassword() error {
+	return Error{Code: http.StatusInternalServerError, Msg: "can't update password for this user"}
+}
+
+func ErrExpiredLink() error {
+	return Error{Code: http.StatusUnauthorized, Msg: "link already expired"}
+}
+
+func ErrCantActivateUser() error {
+	return Error{Code: http.StatusUnauthorized, Msg: "can't activate user"}
 }

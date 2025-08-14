@@ -1,16 +1,15 @@
 package models
 
-// Register/Login User
-type UserReq struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
+import "time"
 
-// User in db
 type User struct {
 	Id       int    `json:"id"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
+
+	Verificated bool      `json:"-"`
+	VerifToken  string    `json:"-"`
+	Expired     time.Time `json:"-"`
 }
 
 // JWT in db
@@ -55,4 +54,9 @@ type Poll struct {
 type PollId struct {
 	Id        int   `json:"question_id"`
 	AnswersId []int `json:"answers_id"`
+}
+
+type EmailSending struct {
+	Email string
+	Link  string
 }
