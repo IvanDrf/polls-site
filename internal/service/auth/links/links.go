@@ -9,7 +9,7 @@ import (
 )
 
 type VerifLinker interface {
-	CreateVerificationLink() string
+	CreateVerificationLink() (string, string)
 }
 
 type verifLinker struct {
@@ -24,11 +24,13 @@ func NewVerifLinker(cfg *config.Config) VerifLinker {
 	}
 }
 
-func (v verifLinker) CreateVerificationLink() string {
+func (v verifLinker) CreateVerificationLink() (string, string) {
 	buff := make([]byte, 32)
 	if _, err := rand.Read(buff); err != nil {
-		return ""
+		return "", ""
 	}
 
-	return fmt.Sprintf("http://%s:%s/verify-email?token=%s", v.host, v.port, hex.EncodeToString(buff))
+	token := hex.EncodeToString(buff)
+
+	return fmt.Sprintf("http://%s:%s/verify-email?token=%s", v.host, v.port, token), token
 }

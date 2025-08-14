@@ -23,8 +23,8 @@ import (
 )
 
 type Auther interface {
-	RegisterUser(user *models.User) (string, string, error)
-	VerifyEmail(link string) error
+	RegisterUser(user *models.User) error
+	VerifyEmail(link string) (string, string, error)
 	LoginUser(user *models.User) (string, string, error)
 
 	RefreshTokens(r *http.Request) (string, string, error)
@@ -68,19 +68,19 @@ func NewAuthService(cfg *config.Config, db *sql.DB, logger *slog.Logger) Auther 
 	}
 }
 
-func (a auth) RegisterUser(user *models.User) (string, string, error) {
+func (a auth) RegisterUser(user *models.User) error {
 	a.logger.Info("auth -> Register")
 
 	if !a.emChecker.ValidEmail(user.Email) {
-		return "", "", errs.ErrInvalidEmailInReg()
+		return errs.ErrInvalidEmailInReg()
 	}
 
 	if !a.pswChecker.ValidPassword(user.Password) {
-		return "", "", errs.ErrInvalidPswInReg()
+		return errs.ErrInvalidPswInReg()
 	}
 
 	if res, err := a.userRepo.FindUserByEmail(user.Email); res.Id != 0 || err == nil {
-		return "", "", errs.ErrAlreadyInDB()
+		return errs.ErrAlreadyInDB()
 	}
 
 	wg := new(sync.WaitGroup)
@@ -90,50 +90,38 @@ func (a auth) RegisterUser(user *models.User) (string, string, error) {
 		user.Password = a.pswHasher.HashPassword(user.Password)
 	}()
 
-	link := a.linker.CreateVerificationLink()
+	link, token := a.linker.CreateVerificationLink()
 	if link == "" {
-		return "", "", errs.ErrCantCreateVerifLink()
-	}
-
-	err := a.emailService.SendEmail(&models.EmailSending{Email: user.Email, Link: link}, email.VerifHeader, email.VerifBody)
-	if err != nil {
-		return "", "", err
+		return errs.ErrCantCreateVerifLink()
 	}
 
 	user.Verificated = false
-	user.VerifLink = link
+	user.VerifToken = token
 	user.Expired = time.Now().Add(24 * time.Hour)
 
 	wg.Wait()
 	a.transaction.StartTransaction()
 
+	var err error
 	user.Id, err = a.userRepo.AddUser(user)
 	if err != nil {
 		a.transaction.RollBackTransaction()
 
 		a.logger.Error(err.Error())
-		return "", "", errs.ErrCantRegister()
+		return errs.ErrCantRegister()
 	}
 
-	accessToken, refreshToken, err := a.jwter.GenerateTokens(user)
+	err = a.emailService.SendEmail(&models.EmailSending{Email: user.Email, Link: link}, email.VerifHeader, email.VerifBody)
 	if err != nil {
 		a.transaction.RollBackTransaction()
 
 		a.logger.Error(err.Error())
-		return "", "", err
-	}
-
-	err = a.tokenRepo.AddRefreshToken(user.Id, refreshToken)
-	if err != nil {
-		a.transaction.RollBackTransaction()
-
-		a.logger.Error(err.Error())
-		return "", "", errs.ErrCantAddToken()
+		return err
 	}
 
 	a.transaction.CommitTransaction()
 
-	return accessToken, refreshToken, nil
+	return nil
 }
 
 func (a auth) LoginUser(user *models.User) (string, string, error) {
@@ -166,22 +154,38 @@ func (a auth) LoginUser(user *models.User) (string, string, error) {
 	return accessToken, refreshToken, err
 }
 
-func (a auth) VerifyEmail(link string) error {
+func (a auth) VerifyEmail(link string) (string, string, error) {
 	user, err := a.userRepo.FindUserByLink(link)
 	if err != nil {
-		return errs.ErrCantFindUserByLink()
+		return "", "", errs.ErrCantFindUserByLink()
 	}
 
 	if time.Now().After(user.Expired) {
-		return errs.ErrExpiredLink()
+		return "", "", errs.ErrExpiredLink()
 	}
 
 	err = a.userRepo.ActivateUser(&user)
 	if err != nil {
-		return errs.ErrCantActivateUser()
+		return "", "", errs.ErrCantActivateUser()
 	}
 
-	return nil
+	accessToken, refreshToken, err := a.jwter.GenerateTokens(&user)
+	if err != nil {
+		a.transaction.RollBackTransaction()
+
+		a.logger.Error(err.Error())
+		return "", "", err
+	}
+
+	err = a.tokenRepo.AddRefreshToken(user.Id, refreshToken)
+	if err != nil {
+		a.transaction.RollBackTransaction()
+
+		a.logger.Error(err.Error())
+		return "", "", errs.ErrCantAddToken()
+	}
+
+	return accessToken, refreshToken, nil
 }
 
 func (a auth) RefreshTokens(r *http.Request) (string, string, error) {

@@ -7,6 +7,7 @@ import (
 
 	"github.com/IvanDrf/polls-site/config"
 	"github.com/IvanDrf/polls-site/internal/models"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 const userTable = "users"
@@ -35,8 +36,8 @@ func NewRepo(cfg *config.Config, db *sql.DB) UserRepo {
 }
 
 func (u userRepo) AddUser(user *models.User) (int, error) {
-	query := fmt.Sprintf("INSERT INTO %s.%s (email, passw, verificated, expired, veriflink) VALUES (?, ?, ?, ?, ?)", u.dbName, userTable)
-	res, err := u.db.Exec(query, user.Email, user.Password, user.Verificated, user.Expired, user.VerifLink)
+	query := fmt.Sprintf("INSERT INTO %s.%s (email, passw, verificated, expired, veriftoken) VALUES (?, ?, ?, ?, ?)", u.dbName, userTable)
+	res, err := u.db.Exec(query, user.Email, user.Password, user.Verificated, user.Expired, user.VerifToken)
 	if err != nil {
 		return -1, err
 	}
@@ -47,7 +48,7 @@ func (u userRepo) AddUser(user *models.User) (int, error) {
 }
 
 func (u userRepo) ActivateUser(user *models.User) error {
-	query := fmt.Sprintf("UPDATE TABLE %s.%s SET verificated = 1U T WHERE id = ?", u.dbName, userTable)
+	query := fmt.Sprintf("UPDATE %s.%s SET verificated = 1 WHERE id = ?", u.dbName, userTable)
 	_, err := u.db.Exec(query, user.Id)
 
 	return err
@@ -84,11 +85,19 @@ func (u userRepo) FindUserByEmail(em string) (models.User, error) {
 }
 
 func (u userRepo) FindUserByLink(link string) (models.User, error) {
-	query := fmt.Sprintf("SELECT * FROM %s.%s WHERE veriflink = ?", u.dbName, userTable)
+	query := fmt.Sprintf("SELECT * FROM %s.%s WHERE veriftoken = ?", u.dbName, userTable)
 	res := u.db.QueryRow(query, link)
 
 	user := models.User{}
-	if err := res.Scan(&user.Id, &user.Email, &user.Password, &user.Verificated, &user.Expired, &user.VerifLink); err != nil {
+	expired := ""
+
+	if err := res.Scan(&user.Id, &user.Email, &user.Password, &user.Verificated, &expired, &user.VerifToken); err != nil {
+		return models.User{}, err
+	}
+
+	var err error
+	user.Expired, err = time.Parse("2006-01-02 15:04:05", expired)
+	if err != nil {
 		return models.User{}, err
 	}
 

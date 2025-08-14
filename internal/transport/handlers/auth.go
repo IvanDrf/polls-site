@@ -41,30 +41,49 @@ func (h handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.logger.Debug("start users registration")
+	if err := h.authService.RegisterUser(&req); err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+
+		json.NewEncoder(w).Encode(err)
+
+		h.logger.Info("req -> Register -> %s", err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h handler) VerifyEmail(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("req -> Verify email")
+
+	link := r.URL.Query().Get("token")
+	h.logger.Debug(link)
+	if link == "" {
+		h.logger.Info("req -> Verify email -> can't get link")
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
 	token := models.JWT{}
 	var err error
 
-	h.logger.Debug("start users registration")
-	token.Access, token.Refresh, err = h.authService.RegisterUser(&req)
+	token.Access, token.Refresh, err = h.authService.VerifyEmail(link)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 
 		json.NewEncoder(w).Encode(err)
 
-		h.logger.Info(fmt.Sprintf("req -> Register -> %s", err))
+		h.logger.Info("req -> Verify email -> %s", err)
 		return
 	}
 
-	h.logger.Info("req -> Register -> success")
+	h.logger.Info("req -> Verify email -> success")
 
 	h.cookier.SetAuthCookies(w, token.Access, token.Refresh)
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(token)
-}
-
-func (h handler) VerifyEmail(w http.ResponseWriter, r *http.Request) {
-
 }
 
 func (h handler) LoginUser(w http.ResponseWriter, r *http.Request) {

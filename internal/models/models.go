@@ -8,7 +8,7 @@ type User struct {
 	Password string `json:"password"`
 
 	Verificated bool      `json:"-"`
-	VerifLink   string    `json:"-"`
+	VerifToken  string    `json:"-"`
 	Expired     time.Time `json:"-"`
 }
 
