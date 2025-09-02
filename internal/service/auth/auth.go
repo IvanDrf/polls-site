@@ -134,6 +134,10 @@ func (a auth) LoginUser(user *models.User) (string, string, error) {
 		return "", "", errs.ErrCantFindUser()
 	}
 
+	if !userInDB.Verificated {
+		return "", "", errs.ErrNotActivatedUser()
+	}
+
 	if !a.pswHasher.ComparePassword(userInDB.Password, user.Password) {
 		return "", "", errs.ErrInvalidPswInLog()
 	}
