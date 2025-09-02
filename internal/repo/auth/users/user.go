@@ -15,6 +15,7 @@ const userTable = "users"
 type UserRepo interface {
 	AddUser(user *models.User) (int, error)
 	ActivateUser(user *models.User) error
+	DeleteUnverifiedUsers() error
 
 	FindUserById(id int) (models.User, error)
 	FindUserByEmail(em string) (models.User, error)

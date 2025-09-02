@@ -28,6 +28,8 @@ func NewServer(cfg *config.Config, db *sql.DB, logger *slog.Logger) *Server {
 }
 
 func (s *Server) Start(cfg *config.Config) {
+	go s.handler.DeleteUnverifiedUsers()
+
 	addr := fmt.Sprintf("%s:%s", cfg.ServerAddress, cfg.ServerPort)
 	if err := http.ListenAndServe(addr, s.server); err != nil {
 		log.Fatal(errs.ErrCantStartServer())

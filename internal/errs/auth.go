@@ -57,3 +57,7 @@ func ErrExpiredLink() error {
 func ErrCantActivateUser() error {
 	return Error{Code: http.StatusUnauthorized, Msg: "can't activate user"}
 }
+
+func ErrNotActivatedUser() error {
+	return Error{Code: http.StatusForbidden, Msg: "user with this email is not verificated"}
+}

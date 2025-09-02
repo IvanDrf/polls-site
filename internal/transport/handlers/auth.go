@@ -12,6 +12,7 @@ type AuthHandler interface {
 	RegisterUser(w http.ResponseWriter, r *http.Request)
 	VerifyEmail(w http.ResponseWriter, r *http.Request)
 	LoginUser(w http.ResponseWriter, r *http.Request)
+	DeleteUnverifiedUsers()
 
 	RefreshTokens(w http.ResponseWriter, r *http.Request)
 }
@@ -128,6 +129,10 @@ func (h handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(token)
+}
+
+func (h handler) DeleteUnverifiedUsers() {
+	h.authService.DeleteUnverifiedUsers()
 }
 
 func (h handler) RefreshTokens(w http.ResponseWriter, r *http.Request) {

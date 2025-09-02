@@ -56,15 +56,6 @@ func (j jwter) GetToken(r *http.Request, tokenType string) (string, error) {
 	return cookie.Value, nil
 }
 
-func (j jwter) GetRefreshToken(r *http.Request) (string, error) {
-	cookie, err := r.Cookie(RefreshToken)
-	if err != nil {
-		return "", errs.ErrCantFindToken()
-	}
-
-	return cookie.Value, nil
-}
-
 func (j jwter) ParseToken(tokenSrt string) (*jwt.Token, error) {
 	token, err := jwt.Parse(tokenSrt, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
