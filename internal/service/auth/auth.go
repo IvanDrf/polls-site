@@ -27,6 +27,8 @@ type Auther interface {
 	VerifyEmail(link string) (string, string, error)
 	LoginUser(user *models.User) (string, string, error)
 
+	DeleteUnverifiedUsers()
+
 	RefreshTokens(r *http.Request) (string, string, error)
 }
 
@@ -186,6 +188,17 @@ func (a auth) VerifyEmail(link string) (string, string, error) {
 	}
 
 	return accessToken, refreshToken, nil
+}
+
+func (a auth) DeleteUnverifiedUsers() {
+	ticker := time.NewTicker(24 * time.Hour)
+	defer ticker.Stop()
+
+	for {
+		if _, ok := <-ticker.C; ok {
+			a.DeleteUnverifiedUsers()
+		}
+	}
 }
 
 func (a auth) RefreshTokens(r *http.Request) (string, string, error) {
