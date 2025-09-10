@@ -85,20 +85,24 @@ func (p pollService) AddPoll(poll *models.Poll, r *http.Request) (models.PollId,
 func (p pollService) DeletePoll(poll *models.Poll, r *http.Request) error {
 	token, err := p.jwter.GetToken(r, jwter.RefreshToken)
 	if err != nil {
+		p.transaction.RollBackTransaction()
 		return err
 	}
 
 	poll.UserId, err = p.tokensRepo.FindUserId(token)
 	if err != nil {
+		p.transaction.RollBackTransaction()
 		return errs.ErrCantFindUserId()
 	}
 
 	question, err := p.questRepo.FindQuestionById(poll.QuestionId)
 	if err != nil {
+		p.transaction.RollBackTransaction()
 		return errs.ErrCantFindQuestion()
 	}
 
 	if poll.UserId != question.UserId {
+		p.transaction.RollBackTransaction()
 		return errs.ErrNotAdmin()
 	}
 
