@@ -12,7 +12,7 @@ func (v voteService) DeleteAllVotesInPoll(poll *models.Poll, r *http.Request) er
   ...
   //
 
-  v.transaction.RollBackTransaction()
+  v.transaction.StartTransaction()
 
   //
   ...
