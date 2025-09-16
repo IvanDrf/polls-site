@@ -1,6 +1,7 @@
 package votes
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 
@@ -11,12 +12,12 @@ import (
 const votesTable = "votes"
 
 type VotesRepo interface {
-	AddVote(vote *models.Vote) error
-	FindVote(questionId, userId int) (int, error)
-	CountVotes(questionId int) (models.PollRes, error)
+	AddVote(ctx context.Context, vote *models.Vote) error
+	FindVote(ctx context.Context, questionId, userId int) (int, error)
+	CountVotes(ctx context.Context, questionId int) (models.PollRes, error)
 
-	DeleteVote(questionId int, userId int) error
-	DeleteAllVotes(questionId int) error
+	DeleteVote(ctx context.Context, questionId int, userId int) error
+	DeleteAllVotes(ctx context.Context, questionId int) error
 }
 
 type votesRepo struct {
@@ -31,16 +32,16 @@ func NewVotesRepo(cfg *config.Config, db *sql.DB) VotesRepo {
 	}
 }
 
-func (v votesRepo) AddVote(vote *models.Vote) error {
+func (v votesRepo) AddVote(ctx context.Context, vote *models.Vote) error {
 	query := fmt.Sprintf("INSERT INTO %s.%s (question_id, answ_id, user_id) VALUES (?, ?, ?)", v.dbName, votesTable)
-	_, err := v.db.Exec(query, vote.QuestionId, vote.AnswerId, vote.UserId)
+	_, err := v.db.ExecContext(ctx, query, vote.QuestionId, vote.AnswerId, vote.UserId)
 
 	return err
 }
 
-func (v votesRepo) FindVote(questionId, userId int) (int, error) {
+func (v votesRepo) FindVote(ctx context.Context, questionId, userId int) (int, error) {
 	query := fmt.Sprintf("SELECT id FROM %s.%s WHERE question_id = ? AND user_id = ?", v.dbName, votesTable)
-	rows := v.db.QueryRow(query, questionId, userId)
+	rows := v.db.QueryRowContext(ctx, query, questionId, userId)
 
 	id := 0
 	err := rows.Scan(&id)
@@ -48,9 +49,9 @@ func (v votesRepo) FindVote(questionId, userId int) (int, error) {
 	return id, err
 }
 
-func (v votesRepo) CountVotes(questionId int) (models.PollRes, error) {
+func (v votesRepo) CountVotes(ctx context.Context, questionId int) (models.PollRes, error) {
 	query := fmt.Sprintf("SELECT answ_id, user_id FROM %s.%s WHERE question_id = ?", v.dbName, votesTable)
-	rows, err := v.db.Query(query, questionId)
+	rows, err := v.db.QueryContext(ctx, query, questionId)
 	if err != nil {
 		return models.PollRes{}, err
 	}
@@ -69,16 +70,16 @@ func (v votesRepo) CountVotes(questionId int) (models.PollRes, error) {
 	return pollRes, nil
 }
 
-func (v votesRepo) DeleteVote(questionId int, userId int) error {
+func (v votesRepo) DeleteVote(ctx context.Context, questionId int, userId int) error {
 	query := fmt.Sprintf("DELETE FROM %s.%s WHERE question_id = ? AND user_id = ?", v.dbName, votesTable)
-	_, err := v.db.Exec(query, questionId, userId)
+	_, err := v.db.ExecContext(ctx, query, questionId, userId)
 
 	return err
 }
 
-func (v votesRepo) DeleteAllVotes(questionId int) error {
+func (v votesRepo) DeleteAllVotes(ctx context.Context, questionId int) error {
 	query := fmt.Sprintf("DELETE FROM %s.%s WHERE question_id = ?", v.dbName, votesTable)
-	_, err := v.db.Exec(query, questionId)
+	_, err := v.db.ExecContext(ctx, query, questionId)
 
 	return err
 }

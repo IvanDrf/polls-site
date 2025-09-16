@@ -1,9 +1,11 @@
 package vote
 
 import (
+	"context"
 	"database/sql"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/IvanDrf/polls-site/config"
 	"github.com/IvanDrf/polls-site/internal/errs"
@@ -50,41 +52,63 @@ func NewVoteService(cfg *config.Config, db *sql.DB, logger *slog.Logger) VoteSer
 	}
 }
 
+const (
+	contextTime = 5 * time.Second
+)
+
 func (v voteService) VoteInPoll(vote *models.Vote, r *http.Request) (models.PollRes, error) {
 	token, err := v.jwter.GetToken(r, jwter.RefreshToken)
 	if err != nil {
 		return models.PollRes{}, err
 	}
 
-	vote.UserId, err = v.tokensRepo.FindUserId(token)
+	ctx, cancel := context.WithTimeout(context.Background(), contextTime)
+	defer cancel()
+
+	vote.UserId, err = v.tokensRepo.FindUserId(ctx, token)
 	if err != nil {
 		return models.PollRes{}, errs.ErrCantFindUserId()
 	}
 
-	question, err := v.questRepo.FindQuestionById(vote.QuestionId)
+	ctx, cancel = context.WithTimeout(context.Background(), contextTime)
+	defer cancel()
+
+	question, err := v.questRepo.FindQuestionById(ctx, vote.QuestionId)
 	if err != nil || question.Id != vote.QuestionId {
 		return models.PollRes{}, errs.ErrCantFindQuestion()
 	}
 
-	_, err = v.votesRepo.FindVote(vote.QuestionId, vote.UserId)
+	ctx, cancel = context.WithTimeout(context.Background(), contextTime)
+	defer cancel()
+
+	_, err = v.votesRepo.FindVote(ctx, vote.QuestionId, vote.UserId)
 	if err == nil {
 		return models.PollRes{}, errs.ErrAlreadyVoted()
 	}
 
-	_, err = v.answRepo.FindAnswerById(vote.AnswerId, vote.QuestionId)
+	ctx, cancel = context.WithTimeout(context.Background(), contextTime)
+	defer cancel()
+
+	_, err = v.answRepo.FindAnswerById(ctx, vote.AnswerId, vote.QuestionId)
 	if err != nil {
 		return models.PollRes{}, errs.ErrBadAnswerId()
 	}
 
 	v.transaction.StartTransaction()
 
-	err = v.votesRepo.AddVote(vote)
+	ctx, cancel = context.WithTimeout(context.Background(), contextTime)
+	defer cancel()
+
+	err = v.votesRepo.AddVote(ctx, vote)
 	if err != nil {
 		v.transaction.RollBackTransaction()
 		return models.PollRes{}, errs.ErrCantAddVote()
 	}
 
-	res, err := v.votesRepo.CountVotes(vote.QuestionId)
+	ctx, cancel = context.WithTimeout(context.Background(), contextTime)
+	defer cancel()
+
+	res, err := v.votesRepo.CountVotes(ctx, vote.QuestionId)
 	if err != nil {
 		v.transaction.RollBackTransaction()
 		return models.PollRes{}, errs.ErrCantCountVotes()
@@ -101,27 +125,42 @@ func (v voteService) DeleteVoteInPoll(vote *models.Vote, r *http.Request) (model
 		return models.PollRes{}, err
 	}
 
-	vote.UserId, err = v.tokensRepo.FindUserId(token)
+	ctx, cancel := context.WithTimeout(context.Background(), contextTime)
+	defer cancel()
+
+	vote.UserId, err = v.tokensRepo.FindUserId(ctx, token)
 	if err != nil {
 		return models.PollRes{}, errs.ErrCantFindUserId()
 	}
 
-	_, err = v.questRepo.FindQuestionById(vote.QuestionId)
+	ctx, cancel = context.WithTimeout(context.Background(), contextTime)
+	defer cancel()
+
+	_, err = v.questRepo.FindQuestionById(ctx, vote.QuestionId)
 	if err != nil {
 		return models.PollRes{}, errs.ErrCantFindQuestion()
 	}
 
-	_, err = v.votesRepo.FindVote(vote.QuestionId, vote.UserId)
+	ctx, cancel = context.WithTimeout(context.Background(), contextTime)
+	defer cancel()
+
+	_, err = v.votesRepo.FindVote(ctx, vote.QuestionId, vote.UserId)
 	if err != nil {
 		return models.PollRes{}, errs.ErrDidntVote()
 	}
 
-	err = v.votesRepo.DeleteVote(vote.QuestionId, vote.UserId)
+	ctx, cancel = context.WithTimeout(context.Background(), contextTime)
+	defer cancel()
+
+	err = v.votesRepo.DeleteVote(ctx, vote.QuestionId, vote.UserId)
 	if err != nil {
 		return models.PollRes{}, errs.ErrCantDeleteVote()
 	}
 
-	voteRes, err := v.votesRepo.CountVotes(vote.QuestionId)
+	ctx, cancel = context.WithTimeout(context.Background(), contextTime)
+	defer cancel()
+
+	voteRes, err := v.votesRepo.CountVotes(ctx, vote.QuestionId)
 	if err != nil {
 		return models.PollRes{}, errs.ErrCantCountVotes()
 	}
@@ -135,12 +174,18 @@ func (v voteService) DeleteAllVotesInPoll(poll *models.Poll, r *http.Request) er
 		return err
 	}
 
-	poll.UserId, err = v.tokensRepo.FindUserId(token)
+	ctx, cancel := context.WithTimeout(context.Background(), contextTime)
+	defer cancel()
+
+	poll.UserId, err = v.tokensRepo.FindUserId(ctx, token)
 	if err != nil {
 		return errs.ErrCantFindUserId()
 	}
 
-	question, err := v.questRepo.FindQuestionById(poll.QuestionId)
+	ctx, cancel = context.WithTimeout(context.Background(), contextTime)
+	defer cancel()
+
+	question, err := v.questRepo.FindQuestionById(ctx, poll.QuestionId)
 	if err != nil {
 		return errs.ErrCantFindQuestion()
 	}
@@ -151,7 +196,10 @@ func (v voteService) DeleteAllVotesInPoll(poll *models.Poll, r *http.Request) er
 
 	v.transaction.StartTransaction()
 
-	err = v.votesRepo.DeleteAllVotes(poll.QuestionId)
+	ctx, cancel = context.WithTimeout(context.Background(), contextTime)
+	defer cancel()
+
+	err = v.votesRepo.DeleteAllVotes(ctx, poll.QuestionId)
 	if err != nil {
 		v.transaction.RollBackTransaction()
 		return errs.ErrCantDeleteAllVotes()
