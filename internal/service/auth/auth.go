@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"database/sql"
 	"log/slog"
 	"net/http"
@@ -13,13 +14,13 @@ import (
 	"github.com/IvanDrf/polls-site/internal/repo/auth/users"
 	"github.com/IvanDrf/polls-site/internal/repo/transaction"
 	"github.com/IvanDrf/polls-site/internal/service/auth/email"
-	"github.com/IvanDrf/polls-site/internal/service/auth/links"
+	"github.com/IvanDrf/polls-site/pkg/linker"
 	"github.com/golang-jwt/jwt"
 
 	j "github.com/IvanDrf/polls-site/internal/repo/auth/jwt"
-	"github.com/IvanDrf/polls-site/internal/service/auth/checker"
-	"github.com/IvanDrf/polls-site/internal/service/auth/hasher"
 	jwter "github.com/IvanDrf/polls-site/internal/transport/auth/jwt"
+	"github.com/IvanDrf/polls-site/pkg/checker"
+	"github.com/IvanDrf/polls-site/pkg/hasher"
 )
 
 type Auther interface {
@@ -70,6 +71,10 @@ func NewAuthService(cfg *config.Config, db *sql.DB, logger *slog.Logger) Auther 
 	}
 }
 
+const (
+	contextTime = 5 * time.Second
+)
+
 func (a auth) RegisterUser(user *models.User) error {
 	a.logger.Info("auth -> Register")
 
@@ -81,7 +86,9 @@ func (a auth) RegisterUser(user *models.User) error {
 		return errs.ErrInvalidPswInReg()
 	}
 
-	if res, err := a.userRepo.FindUserByEmail(user.Email); res.Id != 0 || err == nil {
+	ctx, cancel := context.WithTimeout(context.Background(), contextTime)
+	defer cancel()
+	if res, err := a.userRepo.FindUserByEmail(ctx, user.Email); res.Id != 0 || err == nil {
 		return errs.ErrAlreadyInDB()
 	}
 
@@ -104,8 +111,11 @@ func (a auth) RegisterUser(user *models.User) error {
 	wg.Wait()
 	a.transaction.StartTransaction()
 
+	ctx, cancel = context.WithTimeout(context.Background(), contextTime)
+	defer cancel()
+
 	var err error
-	user.Id, err = a.userRepo.AddUser(user)
+	user.Id, err = a.userRepo.AddUser(ctx, user)
 	if err != nil {
 		a.transaction.RollBackTransaction()
 
@@ -129,7 +139,10 @@ func (a auth) RegisterUser(user *models.User) error {
 func (a auth) LoginUser(user *models.User) (string, string, error) {
 	a.logger.Info("auth -> Login")
 
-	userInDB, err := a.userRepo.FindUserByEmail(user.Email)
+	ctx, cancel := context.WithTimeout(context.Background(), contextTime)
+	defer cancel()
+
+	userInDB, err := a.userRepo.FindUserByEmail(ctx, user.Email)
 	if err != nil {
 		return "", "", errs.ErrCantFindUser()
 	}
@@ -147,21 +160,34 @@ func (a auth) LoginUser(user *models.User) (string, string, error) {
 		return "", "", err
 	}
 
-	tokenInDB, err := a.tokenRepo.FindRefreshToken(userInDB.Id)
+	ctx, cancel = context.WithTimeout(context.Background(), contextTime)
+	defer cancel()
+
+	tokenInDB, err := a.tokenRepo.FindRefreshToken(ctx, userInDB.Id)
 	if err != nil {
-		err = a.tokenRepo.AddRefreshToken(userInDB.Id, refreshToken)
+		ctx, cancel = context.WithTimeout(context.Background(), contextTime)
+		defer cancel()
+
+		err = a.tokenRepo.AddRefreshToken(ctx, userInDB.Id, refreshToken)
 		if err != nil {
 			return "", "", errs.ErrCantAddToken()
 		}
+
 	} else {
-		err = a.tokenRepo.UpdateRefreshToken(tokenInDB.UserId, refreshToken)
+		ctx, cancel = context.WithTimeout(context.Background(), contextTime)
+		defer cancel()
+
+		err = a.tokenRepo.UpdateRefreshToken(ctx, tokenInDB.UserId, refreshToken)
 	}
 
 	return accessToken, refreshToken, err
 }
 
 func (a auth) VerifyEmail(link string) (string, string, error) {
-	user, err := a.userRepo.FindUserByLink(link)
+	ctx, cancel := context.WithTimeout(context.Background(), contextTime)
+	defer cancel()
+
+	user, err := a.userRepo.FindUserByLink(ctx, link)
 	if err != nil {
 		return "", "", errs.ErrCantFindUserByLink()
 	}
@@ -170,7 +196,10 @@ func (a auth) VerifyEmail(link string) (string, string, error) {
 		return "", "", errs.ErrExpiredLink()
 	}
 
-	err = a.userRepo.ActivateUser(&user)
+	ctx, cancel = context.WithTimeout(context.Background(), contextTime)
+	defer cancel()
+
+	err = a.userRepo.ActivateUser(ctx, &user)
 	if err != nil {
 		return "", "", errs.ErrCantActivateUser()
 	}
@@ -183,7 +212,10 @@ func (a auth) VerifyEmail(link string) (string, string, error) {
 		return "", "", err
 	}
 
-	err = a.tokenRepo.AddRefreshToken(user.Id, refreshToken)
+	ctx, cancel = context.WithTimeout(context.Background(), contextTime)
+	defer cancel()
+
+	err = a.tokenRepo.AddRefreshToken(ctx, user.Id, refreshToken)
 	if err != nil {
 		a.transaction.RollBackTransaction()
 
@@ -222,9 +254,12 @@ func (a auth) RefreshTokens(r *http.Request) (string, string, error) {
 		return "", "", errs.ErrInValidToken()
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), contextTime)
+	defer cancel()
+
 	userId := int(claims[jwter.UserId].(float64))
 
-	user, err := a.userRepo.FindUserById(userId)
+	user, err := a.userRepo.FindUserById(ctx, userId)
 	if err != nil {
 		return "", "", errs.ErrInValidToken()
 	}
@@ -234,7 +269,10 @@ func (a auth) RefreshTokens(r *http.Request) (string, string, error) {
 		return "", "", errs.ErrCantCreateToken()
 	}
 
-	err = a.tokenRepo.UpdateRefreshToken(userId, refreshToken)
+	ctx, cancel = context.WithTimeout(context.Background(), contextTime)
+	defer cancel()
+
+	err = a.tokenRepo.UpdateRefreshToken(ctx, userId, refreshToken)
 	if err != nil {
 		return "", "", errs.ErrCantAddToken()
 	}

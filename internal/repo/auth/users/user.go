@@ -1,6 +1,7 @@
 package users
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"time"
@@ -13,15 +14,15 @@ import (
 const userTable = "users"
 
 type UserRepo interface {
-	AddUser(user *models.User) (int, error)
-	ActivateUser(user *models.User) error
-	DeleteUnverifiedUsers() error
+	AddUser(ctx context.Context, user *models.User) (int, error)
+	ActivateUser(ctx context.Context, user *models.User) error
+	DeleteUnverifiedUsers(ctx context.Context) error
 
-	FindUserById(id int) (models.User, error)
-	FindUserByEmail(em string) (models.User, error)
-	FindUserByLink(link string) (models.User, error)
+	FindUserById(ctx context.Context, id int) (models.User, error)
+	FindUserByEmail(ctx context.Context, em string) (models.User, error)
+	FindUserByLink(ctx context.Context, link string) (models.User, error)
 
-	ResetPassword(password string, userId int) error
+	ResetPassword(ctx context.Context, password string, userId int) error
 }
 
 type userRepo struct {
@@ -36,9 +37,9 @@ func NewRepo(cfg *config.Config, db *sql.DB) UserRepo {
 	}
 }
 
-func (u userRepo) AddUser(user *models.User) (int, error) {
+func (u userRepo) AddUser(ctx context.Context, user *models.User) (int, error) {
 	query := fmt.Sprintf("INSERT INTO %s.%s (email, passw, verificated, expired, veriftoken) VALUES (?, ?, ?, ?, ?)", u.dbName, userTable)
-	res, err := u.db.Exec(query, user.Email, user.Password, user.Verificated, user.Expired, user.VerifToken)
+	res, err := u.db.ExecContext(ctx, query, user.Email, user.Password, user.Verificated, user.Expired, user.VerifToken)
 	if err != nil {
 		return -1, err
 	}
@@ -48,23 +49,23 @@ func (u userRepo) AddUser(user *models.User) (int, error) {
 	return int(id), err
 }
 
-func (u userRepo) ActivateUser(user *models.User) error {
+func (u userRepo) ActivateUser(ctx context.Context, user *models.User) error {
 	query := fmt.Sprintf("UPDATE %s.%s SET verificated = 1 WHERE id = ?", u.dbName, userTable)
-	_, err := u.db.Exec(query, user.Id)
+	_, err := u.db.ExecContext(ctx, query, user.Id)
 
 	return err
 }
 
-func (u userRepo) DeleteUnverifiedUsers() error {
+func (u userRepo) DeleteUnverifiedUsers(ctx context.Context) error {
 	query := fmt.Sprintf("DELETE FROM %s.%s WHERE verificated = 0 AND expired < ?", u.dbName, userTable)
-	_, err := u.db.Exec(query, time.Now())
+	_, err := u.db.ExecContext(ctx, query, time.Now())
 
 	return err
 }
 
-func (u userRepo) FindUserById(userId int) (models.User, error) {
+func (u userRepo) FindUserById(ctx context.Context, userId int) (models.User, error) {
 	query := fmt.Sprintf("SELECT id, email, passw FROM %s.%s WHERE id = ?", u.dbName, userTable)
-	res := u.db.QueryRow(query, userId)
+	res := u.db.QueryRowContext(ctx, query, userId)
 
 	user := models.User{}
 	if err := res.Scan(&user.Id, &user.Email, &user.Password); err != nil {
@@ -73,9 +74,9 @@ func (u userRepo) FindUserById(userId int) (models.User, error) {
 
 	return user, nil
 }
-func (u userRepo) FindUserByEmail(em string) (models.User, error) {
+func (u userRepo) FindUserByEmail(ctx context.Context, em string) (models.User, error) {
 	query := fmt.Sprintf("SELECT id, email, passw FROM %s.%s WHERE email= ?", u.dbName, userTable)
-	res := u.db.QueryRow(query, em)
+	res := u.db.QueryRowContext(ctx, query, em)
 
 	user := models.User{}
 	if err := res.Scan(&user.Id, &user.Email, &user.Password); err != nil {
@@ -85,9 +86,9 @@ func (u userRepo) FindUserByEmail(em string) (models.User, error) {
 	return user, nil
 }
 
-func (u userRepo) FindUserByLink(link string) (models.User, error) {
+func (u userRepo) FindUserByLink(ctx context.Context, link string) (models.User, error) {
 	query := fmt.Sprintf("SELECT * FROM %s.%s WHERE veriftoken = ?", u.dbName, userTable)
-	res := u.db.QueryRow(query, link)
+	res := u.db.QueryRowContext(ctx, query, link)
 
 	user := models.User{}
 	expired := ""
@@ -105,9 +106,9 @@ func (u userRepo) FindUserByLink(link string) (models.User, error) {
 	return user, nil
 }
 
-func (u userRepo) ResetPassword(password string, userId int) error {
+func (u userRepo) ResetPassword(ctx context.Context, password string, userId int) error {
 	query := fmt.Sprintf("UPDATE TABLE %s.%s SET passw = ? WHERE user_id = ?", u.dbName, userTable)
-	_, err := u.db.Exec(query, password, userId)
+	_, err := u.db.ExecContext(ctx, query, password, userId)
 
 	return err
 }
