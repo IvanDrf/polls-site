@@ -14,13 +14,13 @@ import (
 	"github.com/IvanDrf/polls-site/internal/repo/auth/users"
 	"github.com/IvanDrf/polls-site/internal/repo/transaction"
 	"github.com/IvanDrf/polls-site/internal/service/auth/email"
-	"github.com/IvanDrf/polls-site/internal/service/auth/links"
+	"github.com/IvanDrf/polls-site/pkg/linker"
 	"github.com/golang-jwt/jwt"
 
 	j "github.com/IvanDrf/polls-site/internal/repo/auth/jwt"
-	"github.com/IvanDrf/polls-site/internal/service/auth/checker"
-	"github.com/IvanDrf/polls-site/internal/service/auth/hasher"
 	jwter "github.com/IvanDrf/polls-site/internal/transport/auth/jwt"
+	"github.com/IvanDrf/polls-site/pkg/checker"
+	"github.com/IvanDrf/polls-site/pkg/hasher"
 )
 
 type Auther interface {
