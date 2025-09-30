@@ -46,7 +46,7 @@ type auth struct {
 	transaction transaction.Transactioner
 
 	emailService email.EmailService
-	linker       links.VerifLinker
+	linker       linker.VerifLinker
 
 	logger *slog.Logger
 }
@@ -65,7 +65,7 @@ func NewAuthService(cfg *config.Config, db *sql.DB, logger *slog.Logger) Auther 
 		transaction: transaction.NewTransactioner(cfg, db),
 
 		emailService: email.NewEmailService(cfg),
-		linker:       links.NewVerifLinker(cfg),
+		linker:       linker.NewVerifLinker(cfg),
 
 		logger: logger,
 	}

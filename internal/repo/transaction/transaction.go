@@ -21,20 +21,20 @@ func NewTransactioner(cfg *config.Config, db *sql.DB) Transactioner {
 	return transactioner{dbName: cfg.DBName, db: db}
 }
 
-func (t transactioner) StartTransaction() {
-	query := "START TRANSACTION"
+const (
+	start    = "START TRANSACTION"
+	commit   = "COMMIT"
+	rollBack = "ROLLBACK"
+)
 
-	t.db.Exec(query)
+func (t transactioner) StartTransaction() {
+	t.db.Exec(start)
 }
 
 func (t transactioner) CommitTransaction() {
-	query := "COMMIT"
-
-	t.db.Exec(query)
+	t.db.Exec(commit)
 }
 
 func (t transactioner) RollBackTransaction() {
-	query := "ROLLBACK"
-
-	t.db.Exec(query)
+	t.db.Exec(rollBack)
 }

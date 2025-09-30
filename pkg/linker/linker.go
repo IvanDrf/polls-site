@@ -1,4 +1,4 @@
-package links
+package linker
 
 import (
 	"crypto/rand"

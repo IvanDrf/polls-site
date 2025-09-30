@@ -1,25 +1,5 @@
 package models
 
-import "time"
-
-type User struct {
-	Id       int    `json:"id"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-
-	Verificated bool      `json:"-"`
-	VerifToken  string    `json:"-"`
-	Expired     time.Time `json:"-"`
-}
-
-// JWT in db
-type JWT struct {
-	Id      int    `json:"-"`
-	UserId  int    `json:"-"`
-	Access  string `json:"access_token"`
-	Refresh string `json:"refresh_token"`
-}
-
 type Question struct {
 	Id       int    `json:"id"`
 	UserId   int    `json:"-"`
@@ -54,9 +34,4 @@ type Poll struct {
 type PollId struct {
 	Id        int   `json:"question_id"`
 	AnswersId []int `json:"answers_id"`
-}
-
-type EmailSending struct {
-	Email string
-	Link  string
 }
